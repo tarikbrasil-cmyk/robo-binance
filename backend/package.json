@@ -1,0 +1,30 @@
+{
+  "name": "binance-bot-backend",
+  "version": "1.0.0",
+  "description": "Backend engine for Binance Futures bot",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "backtest": "node backtest.js",
+    "benchmark": "node -e \"import('./src/benchmarkEngine.js').then(m => m.runAutomaticBenchmark(1000))\"",
+    "test": "node src/tests/systemValidator.js",
+    "walkforward": "node walkforward.js"
+  },
+  "dependencies": {
+    "axios": "^1.13.6",
+    "ccxt": "^4.5.43",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.0",
+    "json2csv": "^6.0.0-alpha.2",
+    "node-schedule": "^2.1.1",
+    "sqlite3": "^5.1.7",
+    "technicalindicators": "^3.1.0",
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}

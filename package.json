@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "build": "powershell -ExecutionPolicy Bypass -File ./build.ps1",
+    "start": "powershell -ExecutionPolicy Bypass -File ./start_platform.ps1"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.6.0"
+  }
+}
