@@ -2,6 +2,7 @@ import logging
 import pandas as pd
 import pandas_ta as ta
 from .exchange_client import ExchangeClient
+from .regime_detector import detect_regime
 
 logger = logging.getLogger("StrategyManager")
 
@@ -13,54 +14,84 @@ class StrategyManager:
         symbol = opportunity['symbol']
         logger.info(f"📊 Analyzing {symbol} for strategy signals...")
         
-        # Fetch OHLCV data
-        ohlcv = await self.exchange.fetch_ohlcv(symbol, timeframe='5m', limit=300)
-        if not ohlcv:
+        # 1. Higher Timeframe (HTF) Analysis: 1h for Regime and Core Trend
+        ohlcv_1h = await self.exchange.fetch_ohlcv(symbol, timeframe='1h', limit=250)
+        if not ohlcv_1h:
+             return None
+             
+        df_1h = pd.DataFrame(ohlcv_1h, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+        
+        # Detect Market Regime
+        regime = detect_regime(df_1h)
+        logger.info(f"🌍 Market Regime for {symbol}: {regime}")
+        
+        # We only want to trend-trade in TRENDING or VOLATILE regimes (depending on risk profile)
+        # RANGING might require a different strategy. For now, we apply standard logic.
+        
+        df_1h['ema_200'] = ta.ema(df_1h['close'], length=200)
+        latest_1h = df_1h.iloc[-1]
+        
+        # 2. Execution Timeframe (LTF) Analysis: 5m for Entries
+        ohlcv_5m = await self.exchange.fetch_ohlcv(symbol, timeframe='5m', limit=100)
+        if not ohlcv_5m:
             return None
             
-        df = pd.DataFrame(ohlcv, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
+        df_5m = pd.DataFrame(ohlcv_5m, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
         
-        # 1. Trend Indicators (EMA)
-        df['ema_fast'] = ta.ema(df['close'], length=9)
-        df['ema_slow'] = ta.ema(df['close'], length=21)
-        df['ema_trend'] = ta.ema(df['close'], length=200)
+        # Indicators for 5m
+        df_5m['ema_fast'] = ta.ema(df_5m['close'], length=9)
+        df_5m['ema_slow'] = ta.ema(df_5m['close'], length=21)
+        df_5m['rsi'] = ta.rsi(df_5m['close'], length=14)
+        df_5m['vol_avg'] = ta.sma(df_5m['volume'], length=20)
         
-        # 2. Momentum Indicators (RSI)
-        df['rsi'] = ta.rsi(df['close'], length=14)
+        df_5m['atr'] = ta.atr(df_5m['high'], df_5m['low'], df_5m['close'], length=14)
+        df_5m['atr_ma'] = ta.sma(df_5m['atr'], length=20)
         
-        # 3. Volume Filters
-        df['vol_avg'] = ta.sma(df['volume'], length=20)
+        last_row = df_5m.iloc[-1]
+        prev_row = df_5m.iloc[-2]
         
-        # 4. Volatility (ATR)
-        df['atr'] = ta.atr(df['high'], df['low'], df['close'], length=14)
+        # Condition Variables
         
-        last_row = df.iloc[-1]
-        prev_row = df.iloc[-2]
+        # Trend Conditions (1h)
+        # Check if HTF Trend is established (EMA 200)
+        htf_up_trend = latest_1h['close'] > latest_1h['ema_200']
+        htf_down_trend = latest_1h['close'] < latest_1h['ema_200']
         
-        # Strategy Logic: EMA Golden Cross + RSI > 55 + Price > EMA200 + Volume > Avg
+        # Momentum Conditions (5m)
         is_golden_cross = prev_row['ema_fast'] <= prev_row['ema_slow'] and last_row['ema_fast'] > last_row['ema_slow']
-        if is_golden_cross:
-            if last_row['rsi'] > 55 and last_row['close'] > last_row['ema_trend'] and last_row['volume'] > last_row['vol_avg']:
-                logger.info(f"🟢 [STRATEGY] Long signal detected for {symbol} | RSI: {last_row['rsi']:.2f} | Vol: {last_row['volume']:.0f} > {last_row['vol_avg']:.0f}")
-                return {
-                    'symbol': symbol,
-                    'side': 'long',
-                    'strategy': 'EMA_CROSS_V2',
-                    'price': last_row['close'],
-                    'timestamp': last_row['timestamp']
-                }
-        
-        # Strategy Logic: EMA Death Cross + RSI < 45 + Price < EMA200 + Volume > Avg
         is_death_cross = prev_row['ema_fast'] >= prev_row['ema_slow'] and last_row['ema_fast'] < last_row['ema_slow']
-        if is_death_cross:
-            if last_row['rsi'] < 45 and last_row['close'] < last_row['ema_trend'] and last_row['volume'] > last_row['vol_avg']:
-                logger.info(f"🔴 [STRATEGY] Short signal detected for {symbol} | RSI: {last_row['rsi']:.2f} | Vol: {last_row['volume']:.0f} > {last_row['vol_avg']:.0f}")
-                return {
-                    'symbol': symbol,
-                    'side': 'short',
-                    'strategy': 'EMA_CROSS_V2',
-                    'price': last_row['close'],
-                    'timestamp': last_row['timestamp']
-                }
+        
+        rsi_bullish = last_row['rsi'] > 55
+        rsi_bearish = last_row['rsi'] < 45
+        
+        # Volume Filter (5m)
+        volume_ok = last_row['volume'] > last_row['vol_avg']
+        
+        # Volatility Filter (5m): ATR must be above its average or rising
+        volatility_ok = last_row['atr'] > last_row['atr_ma']
+        
+        # Strategy Logic: LONG
+        if is_golden_cross and rsi_bullish and htf_up_trend and volume_ok and volatility_ok:
+            logger.info(f"🟢 [STRATEGY] Long signal for {symbol} | Regime: {regime} | RSI: {last_row['rsi']:.2f} | HTF Trend: UP | Vol: {last_row['volume']:.0f} > Avg")
+            return {
+                'symbol': symbol,
+                'side': 'long',
+                'strategy': 'MTF_EMA_CROSS',
+                'regime': regime,
+                'price': last_row['close'],
+                'timestamp': last_row['timestamp']
+            }
+        
+        # Strategy Logic: SHORT
+        if is_death_cross and rsi_bearish and htf_down_trend and volume_ok and volatility_ok:
+            logger.info(f"🔴 [STRATEGY] Short signal for {symbol} | Regime: {regime} | RSI: {last_row['rsi']:.2f} | HTF Trend: DOWN | Vol: {last_row['volume']:.0f} > Avg")
+            return {
+                'symbol': symbol,
+                'side': 'short',
+                'strategy': 'MTF_EMA_CROSS',
+                'regime': regime,
+                'price': last_row['close'],
+                'timestamp': last_row['timestamp']
+            }
                 
         return None
