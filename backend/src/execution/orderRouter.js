@@ -188,18 +188,9 @@ export async function executeTradeSequence(symbol, side, currentPrice, wss, stra
         const exitSide = IS_SPOT ? 'SELL' : (side === 'BUY' ? 'SELL' : 'BUY');
 
         // Use strategy-provided TP/SL recalculated from actual entry
-        const slDistance = Math.abs(currentPrice - stopLossPrice);
-        const tpDistance = Math.abs(currentPrice - takeProfitPrice);
-        
-        const tpTarget = side === 'BUY'
-            ? entryPrice + tpDistance
-            : entryPrice - tpDistance;
-        const slTarget = side === 'BUY'
-            ? entryPrice - slDistance
-            : entryPrice + slDistance;
 
-        const tpPriceF = parseFloat(exchange.priceToPrecision(symbol, tpTarget));
-        const slPriceF = parseFloat(exchange.priceToPrecision(symbol, slTarget));
+        const tpPriceF = parseFloat(exchange.priceToPrecision(symbol, takeProfitPrice));
+        const slPriceF = parseFloat(exchange.priceToPrecision(symbol, stopLossPrice));
 
         // ── Structured trade info log ──
         const adx = strategyData.indicator?.adx;
