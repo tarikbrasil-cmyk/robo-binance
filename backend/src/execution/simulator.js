@@ -102,16 +102,12 @@ export function simulateTrade(
         return null;
     }
 
-    // ── 4b. Re-derive effective SL price from risk engine's stop distance ─────
-    // This guarantees that the simulated exit price is CONSISTENT with the expected
-    // loss calculation, even when minStopDistancePct clipping was applied.
-    const effectiveStopPct = riskData.stopDistancePercent; // may be clipped to 0.2%
-    const effectiveStopLossPrice = signalData.signal === 'BUY'
-        ? signalData.entryPrice * (1 - effectiveStopPct)
-        : signalData.entryPrice * (1 + effectiveStopPct);
+    // ── 4b. Use RAW Strategy SL/TP Targets ───────────────────────────────────
+    // As per critical mandate: Backtest MUST NOT recalculate TP/SL.
+    // Ensure we are strictly using the strategy's targets.
+    const tpTarget = signalData.takeProfitPrice;
+    const slTarget = signalData.stopLossPrice;
 
-    // Override the signal's raw SL with the risk-engine-bounded SL
-    signalData.stopLossPrice = effectiveStopLossPrice;
 
     // ── 5. Entry Slippage ────────────────────────────────────────────────────
     const entrySlippagePct = config.general?.maxSpreadPercent ?? 0.0005;
