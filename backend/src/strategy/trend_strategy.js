@@ -33,14 +33,16 @@ export function evaluateTrendStrategy(candle, currentIndicator, previousIndicato
     const crossBullish = prevEma50 <= prevEma200 && ema50 > ema200;
     const crossBearish = prevEma50 >= prevEma200 && ema50 < ema200;
 
+    const atr = currentIndicator.atr;
+
     if (adx > settings.adxThreshold) {
         if (crossBullish) {
             return {
                 strategy: 'EMA_TREND',
                 signal: 'BUY',
                 entryPrice: price,
-                takeProfitPrice: price * (1 + settings.takeProfit),
-                stopLossPrice: price * (1 - settings.stopLoss)
+                takeProfitPrice: price + (atr * settings.atrTakeProfitMultiplier),
+                stopLossPrice: price - (atr * settings.atrStopMultiplier)
             };
         }
 
@@ -49,8 +51,8 @@ export function evaluateTrendStrategy(candle, currentIndicator, previousIndicato
                 strategy: 'EMA_TREND',
                 signal: 'SELL',
                 entryPrice: price,
-                takeProfitPrice: price * (1 - settings.takeProfit),
-                stopLossPrice: price * (1 + settings.stopLoss)
+                takeProfitPrice: price - (atr * settings.atrTakeProfitMultiplier),
+                stopLossPrice: price + (atr * settings.atrStopMultiplier)
             };
         }
     }

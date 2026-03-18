@@ -1,5 +1,5 @@
 import exchange, { IS_SPOT, BOT_MODE } from '../services/exchangeClient.js';
-import { insertLog, insertPnL } from '../database/db.js';
+import { insertLog } from '../database/db.js';
 import { broadcastMessage } from '../utils/websocket.js';
 import { calculatePositionSize } from '../risk/position_sizing.js';
 import { activeTrades } from './tradeMonitor.js';
@@ -110,25 +110,53 @@ export async function executeTradeSequence(symbol, side, currentPrice, wss, stra
 
         const entryPrice = entryOrder.average || currentPrice;
 
-        // 🔥 VALIDAÇÃO CRÍTICA (ANTI-BUG)
-        if (side === 'BUY') {
-            if (takeProfitPrice <= entryPrice) throw new Error(`TP inválido BUY`);
-            if (stopLossPrice >= entryPrice) throw new Error(`SL inválido BUY`);
-        } else {
-            if (takeProfitPrice >= entryPrice) throw new Error(`TP inválido SELL`);
-            if (stopLossPrice <= entryPrice) throw new Error(`SL inválido SELL`);
-        }
-
+        // Exit side
         const exitSide = IS_SPOT ? 'SELL' : (side === 'BUY' ? 'SELL' : 'BUY');
 
-        // ✅ CORREÇÃO DEFINITIVA — SEM REESCALA
+        // ✅ Validação única e robusta
+        if (side === 'BUY') {
+            if (takeProfitPrice <= entryPrice) {
+                throw new Error(`[VALIDATION] Invalid TP for BUY`);
+            }
+            if (stopLossPrice >= entryPrice) {
+                throw new Error(`[VALIDATION] Invalid SL for BUY`);
+            }
+        } else {
+            if (takeProfitPrice >= entryPrice) {
+                throw new Error(`[VALIDATION] Invalid TP for SELL`);
+            }
+            if (stopLossPrice <= entryPrice) {
+                throw new Error(`[VALIDATION] Invalid SL for SELL`);
+            }
+        }
+
+        // ✅ SEM REESCALA
         const tpPriceF = parseFloat(exchange.priceToPrecision(symbol, takeProfitPrice));
         const slPriceF = parseFloat(exchange.priceToPrecision(symbol, stopLossPrice));
 
-        console.log(`[TRADE] ${symbol} ${side}`);
-        console.log(`Entry: ${entryPrice}`);
-        console.log(`TP: ${tpPriceF}`);
-        console.log(`SL: ${slPriceF}`);
+        // 🧠 Logs avançados
+        const adx = strategyData.indicator?.adx;
+        const atrVal = strategyData.indicator?.atr;
+        const volume = strategyData.indicator?.volume;
+        const volAvg = strategyData.indicator?.volSma20;
+
+        console.log(`\n==================================================`);
+        console.log(`          TRADE SIGNAL INFO (Stabilized)`);
+        console.log(`==================================================`);
+        console.log(`Symbol:          ${symbol}`);
+        console.log(`Strategy:        ${strategyData.strategy || 'TREND_FOLLOWING'}`);
+        console.log(`Side:            ${side}`);
+        console.log(`ADX:             ${adx != null ? adx.toFixed(2) : 'N/A'}`);
+        console.log(`ATR:             ${atrVal != null ? atrVal.toFixed(2) : 'N/A'}`);
+        console.log(`Volume:          ${volume != null ? volume.toFixed(0) : 'N/A'}`);
+        console.log(`Vol/Avg:         ${(volume && volAvg) ? (volume / volAvg).toFixed(2) + 'x' : 'N/A'}`);
+        console.log(`--------------------------------------------------`);
+        console.log(`Entry:           ${entryPrice.toFixed(2)}`);
+        console.log(`Stop:            ${slPriceF.toFixed(2)}`);
+        console.log(`TP:              ${tpPriceF.toFixed(2)}`);
+        console.log(`Position:        $${positionalUSDT.toFixed(2)}`);
+        console.log(`Risk:            ${(positionalData.finalRiskPct * 100).toFixed(2)}%`);
+        console.log(`==================================================\n`);
 
         if (IS_SPOT) {
             try {
