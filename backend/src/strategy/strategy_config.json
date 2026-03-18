@@ -1,0 +1,17 @@
+{
+  "regime_detection": {
+    "ema_fast": 9,
+    "ema_slow": 21,
+    "ema_trend": 200
+  },
+  "filters": {
+    "rsi_long": 55,
+    "rsi_short": 45,
+    "volume_period": 20,
+    "atr_period": 14
+  },
+  "risk": {
+    "max_positions": 5,
+    "risk_per_trade": 0.01
+  }
+}

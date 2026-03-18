@@ -183,10 +183,25 @@ export async function executeTradeSequence(symbol, side, currentPrice, wss, stra
             timestamp: Date.now(),
             mode: BOT_MODE
         };
-
+if (side === 'BUY') {
+    if (takeProfitPrice <= entryPrice) {
+        throw new Error(`[VALIDATION] Invalid TP BUY: ${takeProfitPrice} <= ${entryPrice}`);
+    }
+    if (stopLossPrice >= entryPrice) {
+        throw new Error(`[VALIDATION] Invalid SL BUY: ${stopLossPrice} >= ${entryPrice}`);
+    }
+} else {
+    if (takeProfitPrice >= entryPrice) {
+        throw new Error(`[VALIDATION] Invalid TP SELL: ${takeProfitPrice} >= ${entryPrice}`);
+    }
+    if (stopLossPrice <= entryPrice) {
+        throw new Error(`[VALIDATION] Invalid SL SELL: ${stopLossPrice} <= ${entryPrice}`);
+    }
+}
         // Exit side
         const exitSide = IS_SPOT ? 'SELL' : (side === 'BUY' ? 'SELL' : 'BUY');
 
+<<<<<<< HEAD
         if (side === 'BUY') {
             if (takeProfitPrice <= entryPrice) {
                 throw new Error(`[VALIDATION] Invalid TP for BUY: ${takeProfitPrice} <= entry ${entryPrice}`);
@@ -205,9 +220,12 @@ export async function executeTradeSequence(symbol, side, currentPrice, wss, stra
 
         const tpTarget = takeProfitPrice;
         const slTarget = stopLossPrice;
+=======
+    // Use strategy-provided TP/SL (no recalculation)
+>>>>>>> 95139a262d21e26886fb4a8563d02c5c6897297c
 
-        const tpPriceF = parseFloat(exchange.priceToPrecision(symbol, tpTarget));
-        const slPriceF = parseFloat(exchange.priceToPrecision(symbol, slTarget));
+        const tpPriceF = parseFloat(exchange.priceToPrecision(symbol, takeProfitPrice));
+        const slPriceF = parseFloat(exchange.priceToPrecision(symbol, stopLossPrice));
 
         console.log(`[DEBUG TRADE] ${symbol} ${side}
 Entry: ${entryPrice}
