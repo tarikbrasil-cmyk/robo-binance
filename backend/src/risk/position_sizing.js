@@ -1,91 +1,44 @@
 /**
- * src/risk/position_sizing.js
- *
- * Risk-based position sizing with Kelly Criterion, Volatility Scaling,
- * Anti-Martingale, Drawdown protection, and hard-cap audit guards.
- *
- * Formula:
- *   riskAmountUSDT     = accountBalance × finalRiskPct
- *   stopDistancePct    = ATR × stopATRMultiplier / entryPrice  (min 0.2%)
- *   positionSizeUSDT   = riskAmountUSDT / stopDistancePct
- *   positionSizeUSDT   = min(positionSizeUSDT, accountBalance × maxLeverage)
- *   expectedLossUSDT   = positionSizeUSDT × stopDistancePct   (hard-clipped to riskAmountUSDT)
+ * STABILIZATION: Simplified Position Sizing
+ * 
+ * Core formula: position_size = (balance * risk_per_trade) / stop_distance_pct
+ * 
+ * Removed: Kelly Criterion, Volatility Scaling, Anti-Martingale
+ * Kept: Drawdown gate, min stop distance guard, leverage cap, sanity checks
  */
 
-/** Minimum stop distance to prevent position explosion when ATR is tiny */
-const MIN_STOP_DISTANCE_PCT = 0.002; // 0.2%
+const MIN_STOP_DISTANCE_PCT = 0.002; // 0.2% minimum stop distance
+const MAX_DRAWDOWN = 0.15; // 15% → stop trading
 
 export function calculatePositionSize({
     accountBalance,
     entryPrice,
-    atr,                          // current ATR value
-    stopATRMultiplier,            // e.g. 1.0 from vwapStrategy.stopLossAtrMultiplier
-    config,
-    indicator,                    // full indicator object for volatility scaling
-    historicalWinRate = 0.55,
-    historicalRewardRisk = 1.5,
-    consecutiveWins = 0,
-    currentDrawdown = 0           // fraction, e.g. 0.15 for 15%
+    atr,
+    stopATRMultiplier = 1.5,
+    maxRiskPerTrade = 0.005, // 0.5% default
+    maxLeverage = 5,
+    currentDrawdown = 0,
 }) {
-    // ─── 0. Drawdown Protection Stop ───────────────────────────────────────────
-    const maxGlobalDrawdown = config.general?.maxDrawdownStop ?? 0.25;
-    if (currentDrawdown >= maxGlobalDrawdown) {
-        return { positionSizeUSDT: 0, reason: 'SYSTEM_DRAWDOWN_EXCEEDED' };
+    // ── 0. Drawdown Protection Gate ──
+    if (currentDrawdown >= MAX_DRAWDOWN) {
+        return { positionSizeUSDT: 0, reason: `DRAWDOWN_EXCEEDED (${(currentDrawdown * 100).toFixed(1)}% >= ${MAX_DRAWDOWN * 100}%)` };
     }
 
-    // ─── 1. Kelly Criterion (Half-Kelly) ───────────────────────────────────────
-    const W = historicalWinRate;
-    const R = historicalRewardRisk;
-    const kellyFraction = W - (1 - W) / R;
-    let positionRisk = kellyFraction > 0 ? kellyFraction * 0.5 : 0.01; // fallback 1%
-
-    // ─── 2. Risk Cap ────────────────────────────────────────────────────────────
-    const maxRisk = config.risk?.maxRiskPerTrade ?? 0.02;
-    positionRisk = Math.min(positionRisk, maxRisk);
-
-    // ─── 3. Drawdown Scaling ────────────────────────────────────────────────────
-    if (currentDrawdown >= 0.20) {
-        positionRisk *= 0.50;
-    } else if (currentDrawdown >= 0.10) {
-        positionRisk *= 0.75;
-    }
-
-    // ─── 4. Volatility Scaling ──────────────────────────────────────────────────
-    let volMultiplier = 1.0;
-    let volatilityFactor = 1.0;
-    if (indicator?.atr && indicator?.atrSma100) {
-        volatilityFactor = indicator.atr / indicator.atrSma100;
-        if (volatilityFactor > 2.0)       volMultiplier = 0.25;
-        else if (volatilityFactor > 1.5)  volMultiplier = 0.50;
-        else if (volatilityFactor < 0.7)  volMultiplier = 1.20;
-    }
-
-    // ─── 5. Anti-Martingale ─────────────────────────────────────────────────────
-    if (consecutiveWins >= 3) volMultiplier *= 1.25;
-
-    // ─── 6. Final Risk % (hard-capped again after scaling) ─────────────────────
-    let finalRiskPct = Math.min(positionRisk * volMultiplier, maxRisk);
-
-    // ─── 7. Risk Amount ─────────────────────────────────────────────────────────
+    // ── 1. Risk per trade ──
+    const finalRiskPct = maxRiskPerTrade;
     const riskAmountUSDT = accountBalance * finalRiskPct;
 
-    // ─── 8. Stop Distance ───────────────────────────────────────────────────────
-    // Use ATR-based stop distance (same multiplier used by the strategy for SL price)
-    const effectiveATR = atr ?? indicator?.atr;
-    const effectiveMultiplier = stopATRMultiplier
-        ?? config.vwapStrategy?.stopLossAtrMultiplier
-        ?? 1.0;
-
+    // ── 2. Stop distance from ATR ──
     let stopDistance = 0;
     let stopDistancePct = 0;
     let stopDistanceClipped = false;
 
-    if (effectiveATR && effectiveATR > 0 && entryPrice > 0) {
-        stopDistance = effectiveATR * effectiveMultiplier;
+    if (atr && atr > 0 && entryPrice > 0) {
+        stopDistance = atr * stopATRMultiplier;
         stopDistancePct = stopDistance / entryPrice;
     }
 
-    // Guard: minimum stop distance 0.2% to prevent position explosion
+    // Guard: min stop distance 0.2%
     if (stopDistancePct < MIN_STOP_DISTANCE_PCT) {
         stopDistancePct = MIN_STOP_DISTANCE_PCT;
         stopDistance = stopDistancePct * entryPrice;
@@ -96,12 +49,11 @@ export function calculatePositionSize({
         return { positionSizeUSDT: 0, reason: 'INVALID_STOP_DISTANCE' };
     }
 
-    // ─── 9. Position Size ───────────────────────────────────────────────────────
+    // ── 3. Core formula ──
     let positionSizeUSDT = riskAmountUSDT / stopDistancePct;
 
-    // ─── 10. Absolute Leverage Cap ──────────────────────────────────────────────
-    const leverage = config.trendStrategy?.leverage ?? 10;
-    const maxPositionSizeUSDT = accountBalance * leverage;
+    // ── 4. Leverage cap ──
+    const maxPositionSizeUSDT = accountBalance * maxLeverage;
     let positionClippedByLeverageCap = false;
 
     if (positionSizeUSDT > maxPositionSizeUSDT) {
@@ -109,14 +61,14 @@ export function calculatePositionSize({
         positionClippedByLeverageCap = true;
     }
 
-    // ─── 11. Hard Guard: ensure actual expected loss ≤ riskAmountUSDT ──────────
+    // ── 5. Ensure expected loss <= risk amount ──
     let expectedLossUSDT = positionSizeUSDT * stopDistancePct;
     if (expectedLossUSDT > riskAmountUSDT) {
         positionSizeUSDT = riskAmountUSDT / stopDistancePct;
-        expectedLossUSDT = riskAmountUSDT; // now exact
+        expectedLossUSDT = riskAmountUSDT;
     }
 
-    // Final sanity
+    // ── 6. Sanity check ──
     if (!isFinite(positionSizeUSDT) || positionSizeUSDT <= 0) {
         return { positionSizeUSDT: 0, reason: 'CALCULATED_SIZE_INVALID' };
     }
@@ -124,28 +76,17 @@ export function calculatePositionSize({
     const positionSizeContracts = positionSizeUSDT / entryPrice;
 
     return {
-        // Core sizing
         positionSizeUSDT,
         positionSizeContracts,
-
-        // Risk breakdown
         accountBalance,
-        riskPerTrade: maxRisk,
+        riskPerTrade: maxRiskPerTrade,
         finalRiskPct,
         riskAmountUSDT,
         expectedLossUSDT,
-
-        // Stop info
         stopDistance,
         stopDistancePercent: stopDistancePct,
         stopDistanceClipped,
-
-        // Leverage
-        leverageUsed: leverage,
+        leverageUsed: maxLeverage,
         positionClippedByLeverageCap,
-
-        // Diagnostics
-        kellyFractionApplied: kellyFraction,
-        volatilityFactor,
     };
 }
