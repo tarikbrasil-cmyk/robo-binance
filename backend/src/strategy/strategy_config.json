@@ -8,10 +8,15 @@
     "rsi_long": 55,
     "rsi_short": 45,
     "volume_period": 20,
-    "atr_period": 14
+    "atr_period": 14,
+    "adx_threshold": 30
   },
   "risk": {
     "max_positions": 5,
-    "risk_per_trade": 0.01
+    "risk_per_trade": 0.005
+  },
+  "execution": {
+    "atr_stop_multiplier": 1.5,
+    "atr_take_profit_multiplier": 1.8
   }
 }
