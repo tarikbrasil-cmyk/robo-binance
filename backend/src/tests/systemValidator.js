@@ -84,7 +84,6 @@ async function runValidationSuite() {
         console.log('\n[TEST 2] Gestão de Risco: Validando limites e Stop Management...');
         riskManager.setDailyStartEquity(1000);
         const available = 1000;
-        const positionalSize = riskManager.calculatePositionSize(available, 1.0);
         const params = riskManager.getRiskParams();
         
         if (IS_SPOT) {
@@ -146,7 +145,6 @@ async function runValidationSuite() {
         if (!IS_SPOT) {
             console.log('\n[TEST 6] Risco: Tentativa de alavancagem abusiva...');
             // Simulating a config that tries 125x (exaggerated)
-            const riskySize = riskManager.calculatePositionSize(1000, 1.0);
             const riskyParams = riskManager.getRiskParams();
             if (riskyParams.leverage <= 20) {
                  console.log(`✅ Bloqueio de Risco: Alavancagem controlada em ${riskyParams.leverage}x.`);

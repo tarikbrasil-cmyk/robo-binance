@@ -65,41 +65,15 @@ export function simulateTrade(
         return null;
     }
 
-    // ── 2. Market Regime ─────────────────────────────────────────────────────
-    const regime = detectMarketRegime(indicator, config);
-
-    if (regime === 'VOLATILE' || regime === 'NEUTRAL') {
-        if (debugLog) {
-            debugLog.push(buildDebugEntry(candle, indicator, config, 'REGIME_FILTER', regime));
-        }
-        return null;
-    }
+    // ── 2. Market Regime (V1: Unified Trend Strategy) ────────────────────────
+    const regime = 'TREND'; 
 
     // ── 3. Strategy Signal ───────────────────────────────────────────────────
-    let signalData = null;
-    if (regime === 'TREND') {
-        signalData = evaluateTrendStrategy(candle, indicator, prevIndicator, config);
-    } else if (regime === 'RANGE') {
-        signalData = evaluateVwapStrategy(candle, indicator, config);
-    }
+    const signalData = evaluateTrendStrategy(candle, indicator, prevIndicator, config);
 
     if (!signalData) {
         if (debugLog) {
-            // Determine why no signal was generated
-            let reason = 'REGIME_FILTER';
-            if (regime === 'RANGE') {
-                const vwap = indicator.vwap;
-                const atr  = indicator.atr;
-                const price = candle.close;
-                const mult  = config.vwapStrategy?.atrThresholdMultiplier ?? 1.0;
-                const dist  = Math.abs(price - vwap);
-                if (dist < atr * mult) {
-                    reason = 'VWAP_DISTANCE_TOO_SMALL';
-                } else {
-                    reason = 'RSI_NOT_EXTREME';
-                }
-            }
-            debugLog.push(buildDebugEntry(candle, indicator, config, reason, regime));
+            debugLog.push(buildDebugEntry(candle, indicator, config, 'NO_SIGNAL', regime));
         }
         return null;
     }
@@ -111,7 +85,7 @@ export function simulateTrade(
         accountBalance:       balance,
         entryPrice:           signalData.entryPrice,
         atr:                  indicator.atr,
-        stopATRMultiplier:    config.vwapStrategy?.stopLossAtrMultiplier ?? 1.0,
+        stopATRMultiplier:    config.trendStrategy?.atrStopMultiplier ?? 1.5,
         config,
         indicator,
         historicalWinRate:    0.55,

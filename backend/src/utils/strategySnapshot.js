@@ -32,31 +32,30 @@ export function displayStrategyPanel(snapshot) {
     console.log(`\nID: ${snapshot.strategyId}`);
     console.log(`Strategy: ${snapshot.strategyName}`);
 
-    console.log('\n--- Regime Detection ---');
-    console.log(`Trend ADX Threshold:    ${snapshot.regime.trendAdxThreshold}`);
-    console.log(`Ranging ADX Threshold:  ${snapshot.regime.rangingAdxThreshold}`);
-    console.log(`Min Volatility (ATR%): ${(snapshot.regime.minVolatilityPercent * 100).toFixed(2)}%`);
-
-    console.log('\n--- VWAP Z-Score Strategy ---');
-    console.log(`Entry Z-Score (L/S):    ${snapshot.vwapZScoreStrategy.zscoreEntryLong} / ${snapshot.vwapZScoreStrategy.zscoreEntryShort}`);
-    console.log(`ATR Stop Multiplier:    ${snapshot.vwapZScoreStrategy.atrStopMultiplier}`);
-    console.log(`RSI Levels (O/O):        ${snapshot.vwapZScoreStrategy.rsiOversold} / ${snapshot.vwapZScoreStrategy.rsiOverbought}`);
-
-    console.log('\n--- Momentum Breakout Strategy ---');
-    console.log(`ADX Threshold:          ${snapshot.momentumBreakoutStrategy.adxThreshold}`);
-    console.log(`Breakout Lookback:      ${snapshot.momentumBreakoutStrategy.breakoutLookback} candles`);
-    console.log(`Volume Multiplier:      ${snapshot.momentumBreakoutStrategy.volumeMultiplier}x`);
-    console.log(`ATR Stop / TP:          ${snapshot.momentumBreakoutStrategy.atrStopMultiplier} / ${snapshot.momentumBreakoutStrategy.atrTakeProfitMultiplier}`);
-    console.log(`EMA Fast/Slow:          ${snapshot.momentumBreakoutStrategy.emaFast} / ${snapshot.momentumBreakoutStrategy.emaSlow}`);
+    console.log('\n--- Trend Following Strategy ---');
+    if (snapshot.trendStrategy) {
+        console.log(`EMA Fast/Slow:          ${snapshot.trendStrategy.emaFast} / ${snapshot.trendStrategy.emaSlow}`);
+        console.log(`ADX Threshold:          ${snapshot.trendStrategy.adxThreshold}`);
+        console.log(`RSI Levels (O/O):       ${snapshot.trendStrategy.rsiOversold} / ${snapshot.trendStrategy.rsiOverbought}`);
+        console.log(`ATR Stop / TP Multi:    ${snapshot.trendStrategy.atrStopMultiplier} / ${snapshot.trendStrategy.atrTakeProfitMultiplier}`);
+        console.log(`Volume Multiplier:      ${snapshot.trendStrategy.volumeMultiplier}x`);
+        console.log(`Preferred Leverage:     ${snapshot.trendStrategy.leverage}x`);
+    } else {
+        console.log(`No Trend Strategy config found.`);
+    }
 
     console.log('\n--- Risk Management ---');
-    console.log(`Risk Per Trade: ${(snapshot.risk.maxRiskPerTrade * 100).toFixed(1)}%`);
-    console.log(`Max Account Exposure: ${(snapshot.risk.maxAccountExposure * 100).toFixed(1)}%`);
-    console.log(`Max Drawdown Stop: ${(snapshot.general.maxDrawdownStop * 100).toFixed(1)}%`);
+    if (snapshot.risk) {
+        console.log(`Risk Per Trade:         ${(snapshot.risk.maxRiskPerTrade * 100).toFixed(1)}%`);
+        console.log(`Max Account Exposure:   ${(snapshot.risk.maxAccountExposure * 100).toFixed(1)}%`);
+    }
+    console.log(`Max Drawdown Stop:      ${(snapshot.general.maxDrawdownStop * 100).toFixed(1)}%`);
+    console.log(`Max Daily Loss:         ${(snapshot.general.maxDailyLoss * 100).toFixed(1)}%`);
 
     console.log('\n--- Execution ---');
-    console.log(`Max Spread: ${snapshot.general.maxSpreadPercent * 100}%`);
-    console.log(`Cooldown: ${snapshot.general.cooldownMinutes} min`);
+    console.log(`Max Spread:             ${(snapshot.general.maxSpreadPercent * 100).toFixed(2)}%`);
+    console.log(`Cooldown:               ${snapshot.general.cooldownMinutes} min`);
+    console.log(`Funding Rate Filter:    ${snapshot.general.fundingRateFilter}`);
 
     console.log('\n' + '='.repeat(50) + '\n');
 }

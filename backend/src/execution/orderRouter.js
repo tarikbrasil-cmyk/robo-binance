@@ -2,233 +2,271 @@ import exchange, { IS_SPOT, BOT_MODE } from '../services/exchangeClient.js';
 import { insertLog, insertPnL } from '../database/db.js';
 import { broadcastMessage } from '../utils/websocket.js';
 import { calculatePositionSize } from '../risk/position_sizing.js';
-import { detectMarketRegime, loadStrategyConfig } from '../strategy/regime_engine.js';
 import { activeTrades } from './tradeMonitor.js';
+import { isSymbolAllowed } from '../data/marketScanner.js';
 
 /**
- * Controller principal de roteamento de ordens.
- * Suporta SPOT e FUTURES via BOT_MODE no .env
- *
- * SPOT:    sem leverage, sem short, TP via LIMIT, SL via STOP_LOSS_LIMIT
- * FUTURES: margem ISOLADA, leverage, TAKE_PROFIT_MARKET + STOP_MARKET
+ * STABILIZATION: Order Router v2
+ * 
+ * Changes from original:
+ * - Pre-trade validation gate (ADX, ATR, SL, TP required)
+ * - Simplified position sizing (no Kelly, no volatility scaling)
+ * - Risk reduced to 0.5% per trade
+ * - Circuit breaker pause increased to 5 minutes
+ * - Structured logging for every decision
+ * - Symbol whitelist enforcement
  */
 
 let executionFailures = 0;
 let circuitBreakerUntil = 0;
 
+// ── STABILIZATION: Pre-trade validation ──
+function validateTradeData(symbol, side, currentPrice, strategyData) {
+    const errors = [];
+
+    if (!currentPrice || currentPrice <= 0) {
+        errors.push(`price=${currentPrice}`);
+    }
+
+    if (!strategyData?.indicator?.adx && strategyData?.indicator?.adx !== 0) {
+        errors.push(`adx=undefined`);
+    }
+
+    if (!strategyData?.indicator?.atr || strategyData.indicator.atr <= 0) {
+        errors.push(`atr=${strategyData?.indicator?.atr}`);
+    }
+
+    if (!strategyData?.stopLossPrice || strategyData.stopLossPrice <= 0) {
+        errors.push(`stopLoss=${strategyData?.stopLossPrice}`);
+    }
+
+    if (!strategyData?.takeProfitPrice || strategyData.takeProfitPrice <= 0) {
+        errors.push(`takeProfit=${strategyData?.takeProfitPrice}`);
+    }
+
+    if (!side || (side !== 'BUY' && side !== 'SELL')) {
+        errors.push(`side=${side}`);
+    }
+
+    if (!isSymbolAllowed(symbol)) {
+        errors.push(`symbol=${symbol} not in whitelist`);
+    }
+
+    if (errors.length > 0) {
+        const reason = errors.join(', ');
+        console.error(`[VALIDATION] Trade rejected for ${symbol} ${side}: ${reason}`);
+        insertLog('VALIDATION_REJECTED', `[${symbol}] ${side} rejected: ${reason}`);
+        return false;
+    }
+
+    return true;
+}
+
 export async function executeTradeSequence(symbol, side, currentPrice, wss, strategyData = {}) {
     // 0. Circuit Breaker check
     if (Date.now() < circuitBreakerUntil) {
-        console.warn(`[EXECUTION] Circuit Breaker ativo. Trading pausado.`);
+        const remainingSec = Math.ceil((circuitBreakerUntil - Date.now()) / 1000);
+        console.warn(`[FAIL-SAFE] Circuit Breaker active. Trading paused for ${remainingSec}s.`);
         return null;
     }
 
-    // 1. Position Locking
+    // 1. Pre-trade validation
+    if (!validateTradeData(symbol, side, currentPrice, strategyData)) {
+        return null;
+    }
+
+    // 2. Position Locking
     if (activeTrades[symbol]) {
-        console.log(`[EXECUTION] Posição Ativa bloqueia nova entrada para ${symbol}. Ignorado.`);
+        console.log(`[EXECUTION] Active position blocks new entry for ${symbol}. Ignored.`);
         return null;
     }
 
-    // Em SPOT, apenas BUY é permitido (não há short)
+    // Em SPOT, apenas BUY é permitido
     if (IS_SPOT && side === 'SELL') {
-        console.log(`[EXECUTION] Modo SPOT: sinal SELL ignorado (sem short em Spot).`);
+        console.log(`[EXECUTION] SPOT mode: SELL signal ignored (no short in Spot).`);
         return null;
     }
 
     try {
         const balanceInfo = await exchange.fetchBalance();
-        // SPOT usa saldo 'free', FUTURES usa 'total' da margin
         const availableBalance = IS_SPOT
             ? (balanceInfo.free?.USDT || 0)
             : (balanceInfo.total?.USDT || 0);
 
-        const config = loadStrategyConfig();
+        // ── STABILIZATION: Simplified position sizing ──
+        const atr = strategyData.indicator.atr;
+        const stopATRMultiplier = strategyData.stopATRMultiplier || 1.5;
         
-        // Capping global risk
         const positionalData = calculatePositionSize({
             accountBalance: availableBalance,
             entryPrice: currentPrice,
-            stopLossPrice: strategyData.stopLossPrice || currentPrice,
-            config: config,
-            indicator: strategyData.indicator || null,
+            atr: atr,
+            stopATRMultiplier: stopATRMultiplier,
+            maxRiskPerTrade: 0.005, // 0.5% hard override
         });
 
         if (positionalData.positionSizeUSDT <= 0) {
-            console.log(`[EXECUTION] Risco declinado (Drawdown / Math Limits) para ${side} em ${symbol}`);
+            console.log(`[POSITION_SIZE] Rejected for ${symbol}: ${positionalData.reason}`);
+            insertLog('SIZING_REJECTED', `[${symbol}] ${positionalData.reason}`);
             return null;
         }
 
+        console.log(`[POSITION_SIZE] ${symbol} | Balance: $${availableBalance.toFixed(2)} | Risk: ${(positionalData.finalRiskPct * 100).toFixed(2)}% | Size: $${positionalData.positionSizeUSDT.toFixed(2)} | Stop: ${(positionalData.stopDistancePercent * 100).toFixed(3)}%`);
+
         const positionalUSDT = positionalData.positionSizeUSDT;
-        // Obter parametros da strategy ativa
-        let leverage = 10;
-        let takeProfitPerc = 0.05;
-        let stopLossPerc = 0.03;
-        
-        if (strategyData.strategy === 'EMA_TREND') {
-            leverage = config.trendStrategy.leverage || 20;
-            takeProfitPerc = config.trendStrategy.takeProfit;
-            stopLossPerc = config.trendStrategy.stopLoss;
-        } else if (strategyData.strategy === 'VWAP_MEAN_REVERSION') {
-            leverage = config.trendStrategy.leverage || 20;
-            // TP/SL do VWAP vêm de distância não de % fixas
-            takeProfitPerc = Math.abs(strategyData.takeProfitPrice - currentPrice) / currentPrice;
-            stopLossPerc = Math.abs(strategyData.stopLossPrice - currentPrice) / currentPrice;
-        }
+
+        // Use strategy-provided SL/TP prices
+        const stopLossPrice = strategyData.stopLossPrice;
+        const takeProfitPrice = strategyData.takeProfitPrice;
+
+        // Leverage (conservative)
+        const leverage = IS_SPOT ? 1 : 5;
 
         await exchange.loadMarkets();
 
         let quantity;
 
         if (IS_SPOT) {
-            // SPOT: sem leverage, quantidade simples = USDT / preço
             const rawQuantity = (positionalUSDT * 0.98) / currentPrice;
             quantity = parseFloat(exchange.amountToPrecision(symbol, rawQuantity));
             console.log(`[EXECUTION] SPOT BUY ${quantity} ${symbol} @ ~${currentPrice}`);
         } else {
-            // FUTURES: aplica leverage e margin mode
             await exchange.setLeverage(leverage, symbol);
             try {
                 await exchange.setMarginMode('ISOLATED', symbol);
-            } catch (mErr) { /* Já em ISOLATED */ }
+            } catch (mErr) { /* Already ISOLATED */ }
 
-            // FIX: positionalUSDT already represents the risk-adjusted notional.
-            // If positionalUSDT is the notional, then quantity = positionalUSDT / price.
-            // The previous code did (positionalUSDT * leverage), which was incorrect if positionalUSDT was already scaled or meant as notional.
-            // Based on position_sizing.js: positionalUSDT = riskAmountUSDT / stopDistancePct, capped by accountBalance * leverage.
-            // So positionalUSDT IS the intended notional exposure.
-            const notional = positionalUSDT * 0.98; 
+            const notional = positionalUSDT * 0.98;
             const rawQuantity = notional / currentPrice;
             quantity = parseFloat(exchange.amountToPrecision(symbol, rawQuantity));
             
-            console.log(`[EXECUTION] FINAL PARAMETERS: ${symbol} | Side: ${side} | Price: ${currentPrice} | Qty: ${quantity} | Notional: ${notional.toFixed(2)} USDT | Lev: ${leverage}x`);
+            console.log(`[EXECUTION] FUTURES ${side} ${quantity} ${symbol} @ ~${currentPrice} | Notional: $${notional.toFixed(2)} | Lev: ${leverage}x`);
         }
 
-        // 2. Execution Guards & Exchange Filters
+        // ── Exchange Filters: minQty, maxQty, stepSize ──
         const market = exchange.market(symbol);
-        const minQty = market.limits.amount.min || 0;
-        const maxQty = market.limits.amount.max || Infinity;
-        const minNotional = market.limits.cost.min || 0;
+        const minQty = market.limits?.amount?.min || 0;
+        const maxQty = market.limits?.amount?.max || Infinity;
+        const minNotional = market.limits?.cost?.min || 0;
 
         if (quantity < minQty) {
-            console.error(`[EXECUTION] Orcem REJEITADA: Quantidade ${quantity} < Min ${minQty} em ${symbol}`);
+            console.error(`[VALIDATION] Order REJECTED: qty ${quantity} < minQty ${minQty} for ${symbol}`);
+            insertLog('ORDER_REJECTED', `[${symbol}] qty ${quantity} < min ${minQty}`);
             return null;
         }
         if (quantity > maxQty) {
-            console.error(`[EXECUTION] Orcem REJEITADA: Quantidade ${quantity} > Max ${maxQty} em ${symbol}`);
+            console.error(`[VALIDATION] Order REJECTED: qty ${quantity} > maxQty ${maxQty} for ${symbol}`);
+            insertLog('ORDER_REJECTED', `[${symbol}] qty ${quantity} > max ${maxQty}`);
             return null;
         }
         if (quantity * currentPrice < minNotional) {
-            console.error(`[EXECUTION] Orcem REJEITADA: Notional ${(quantity * currentPrice).toFixed(2)} < Min ${minNotional} em ${symbol}`);
-            return null;
-        }
-        if (currentPrice <= 0) {
-            console.error(`[EXECUTION] Orcem REJEITADA: Preço inválido (${currentPrice})`);
+            console.error(`[VALIDATION] Order REJECTED: notional ${(quantity * currentPrice).toFixed(2)} < min ${minNotional} for ${symbol}`);
+            insertLog('ORDER_REJECTED', `[${symbol}] notional below minimum`);
             return null;
         }
 
-        // Executa ordem de entrada
+        // ── Execute entry order ──
         let entryOrder = await exchange.createMarketOrder(symbol, side, quantity);
         
         // Reset failures on success
         executionFailures = 0;
         let entryPrice = entryOrder.average || currentPrice;
 
-        insertLog('TRADE_OPENED', `[${symbol}] ${side} executado a ${entryPrice} (Qtd: ${quantity})`);
+        insertLog('TRADE_OPENED', `[${symbol}] ${side} executed at ${entryPrice} (Qty: ${quantity})`);
 
         const activePosition = {
             symbol,
             side,
             entryPrice,
             quantity,
-            leverage: IS_SPOT ? 1 : (leverage || 10),
+            leverage: IS_SPOT ? 1 : leverage,
             timestamp: Date.now(),
             mode: BOT_MODE
         };
 
-        // Define side de saída
+        // Exit side
         const exitSide = IS_SPOT ? 'SELL' : (side === 'BUY' ? 'SELL' : 'BUY');
 
-        // Preços alvo de TP e SL
+        // Use strategy-provided TP/SL recalculated from actual entry
+        const slDistance = Math.abs(currentPrice - stopLossPrice);
+        const tpDistance = Math.abs(currentPrice - takeProfitPrice);
+        
         const tpTarget = side === 'BUY'
-            ? entryPrice * (1 + takeProfitPerc)
-            : entryPrice * (1 - takeProfitPerc);
+            ? entryPrice + tpDistance
+            : entryPrice - tpDistance;
         const slTarget = side === 'BUY'
-            ? entryPrice * (1 - stopLossPerc)
-            : entryPrice * (1 + stopLossPerc);
+            ? entryPrice - slDistance
+            : entryPrice + slDistance;
 
         const tpPriceF = parseFloat(exchange.priceToPrecision(symbol, tpTarget));
         const slPriceF = parseFloat(exchange.priceToPrecision(symbol, slTarget));
 
+        // ── Structured trade info log ──
         const adx = strategyData.indicator?.adx;
-        const trendThresh = config.regime.trendAdxThreshold;
-        const rangeThresh = config.regime.rangingAdxThreshold;
-        const regime = adx > trendThresh ? 'TREND' : (adx < rangeThresh ? 'RANGE' : 'NEUTRAL');
-        
-        const volMult = (strategyData.indicator?.volume / strategyData.indicator?.volSma20).toFixed(2);
+        const atrVal = strategyData.indicator?.atr;
+        const volume = strategyData.indicator?.volume;
+        const volAvg = strategyData.indicator?.volSma20;
 
         console.log(`\n==================================================`);
-        console.log(`               TRADE SIGNAL INFO (V2)`);
+        console.log(`          TRADE SIGNAL INFO (Stabilized)`);
         console.log(`==================================================`);
         console.log(`Symbol:          ${symbol}`);
-        console.log(`Strategy:        ${strategyData.strategy}`);
-        console.log(`Regime:          ${regime}`);
-        console.log(`ADX:             ${adx?.toFixed(2)}`);
-        console.log(`ATR:             ${strategyData.indicator?.atr?.toFixed(2)}`);
-        console.log(`ATR%:            ${(strategyData.indicator?.atrPercent * 100).toFixed(3)}%`);
-        console.log(`Z-Score:         ${strategyData.indicator?.zscore?.toFixed(2) || 'N/A'}`);
-        console.log(`Vol Multiplier:  ${volMult}x`);
+        console.log(`Strategy:        ${strategyData.strategy || 'TREND_FOLLOWING'}`);
+        console.log(`Side:            ${side}`);
+        console.log(`ADX:             ${adx != null ? adx.toFixed(2) : 'N/A'}`);
+        console.log(`ATR:             ${atrVal != null ? atrVal.toFixed(2) : 'N/A'}`);
+        console.log(`Volume:          ${volume != null ? volume.toFixed(0) : 'N/A'}`);
+        console.log(`Vol/Avg:         ${(volume && volAvg) ? (volume / volAvg).toFixed(2) + 'x' : 'N/A'}`);
         console.log(`--------------------------------------------------`);
         console.log(`Entry:           ${entryPrice.toFixed(2)}`);
         console.log(`Stop:            ${slPriceF.toFixed(2)}`);
         console.log(`TP:              ${tpPriceF.toFixed(2)}`);
+        console.log(`Position:        $${positionalUSDT.toFixed(2)}`);
+        console.log(`Risk:            ${(positionalData.finalRiskPct * 100).toFixed(2)}% ($${positionalData.riskAmountUSDT.toFixed(2)})`);
         console.log(`==================================================\n`);
 
         if (IS_SPOT) {
-            // SPOT: OCO (One-Cancels-the-Other) para colocar TP e SL sem travar saldo 2x
+            // SPOT: OCO
             try {
-                // Preço de Stop Limit levemente abaixo do Stop Price para garantir execução em quedas rápidas
-                // Usando uma margem de 0.5% para o Stop Limit em relação ao Stop Price
                 const slLimitPrice = parseFloat(exchange.priceToPrecision(symbol, slPriceF * 0.995));
                 
                 const ocoParams = {
-                    symbol: symbol.replace('/', '').split(':')[0], // Formato BTCUSDT
+                    symbol: symbol.replace('/', '').split(':')[0],
                     side: exitSide,
                     quantity: quantity,
-                    price: tpPriceF,               // Preço do Take Profit (Limit)
-                    stopPrice: slPriceF,           // Preço do Trigger do Stop Loss
-                    stopLimitPrice: slLimitPrice,  // Preço de Execução do Stop Loss
+                    price: tpPriceF,
+                    stopPrice: slPriceF,
+                    stopLimitPrice: slLimitPrice,
                     stopLimitTimeInForce: 'GTC'
                 };
 
-                console.log(`[EXECUTION] [${BOT_MODE}] Enviando OCO: TP=${tpPriceF}, SL=${slPriceF}, Limit=${slLimitPrice}`);
+                console.log(`[EXECUTION] SPOT OCO: TP=${tpPriceF}, SL=${slPriceF}`);
                 await exchange.privatePostOrderOco(ocoParams);
                 
-                insertLog('STRATEGY_ARMED', `[${symbol}] ${BOT_MODE} OCO posicionado: TP ${tpPriceF}, SL ${slPriceF}`);
-                console.log(`[EXECUTION] SPOT: OCO Posicionado com sucesso.`);
+                insertLog('STRATEGY_ARMED', `[${symbol}] SPOT OCO: TP ${tpPriceF}, SL ${slPriceF}`);
             } catch (ocoErr) {
-                console.error(`[EXECUTION] [${BOT_MODE}] Falha ao posicionar OCO: ${ocoErr.message}`);
+                console.error(`[EXECUTION] SPOT OCO failed: ${ocoErr.message}`);
                 try {
-                    console.log(`[EXECUTION] Tentando SL Fallback...`);
                     await exchange.createOrder(symbol, 'stop_loss_limit', exitSide, quantity, slPriceF, { stopPrice: slPriceF });
-                    insertLog('FALLBACK_ARMED', `[${symbol}] SPOT SL Fallback posicionado a ${slPriceF}`);
+                    insertLog('FALLBACK_ARMED', `[${symbol}] SPOT SL fallback at ${slPriceF}`);
                 } catch (fallbackErr) {
-                    console.error(`[EXECUTION] Falha crítica no Fallback de SL: ${fallbackErr.message}`);
-                    insertLog('CRITICAL_ERROR', `[${symbol}] Falha ao armar proteções de saída!`);
+                    console.error(`[FAIL-SAFE] Critical: Failed to arm exit protection for ${symbol}: ${fallbackErr.message}`);
+                    insertLog('CRITICAL_ERROR', `[${symbol}] Failed to arm exit protection!`);
                 }
             }
 
         } else {
-            // FUTURES: TAKE_PROFIT_MARKET + STOP_MARKET com reduceOnly
+            // FUTURES: TAKE_PROFIT_MARKET + STOP_MARKET
             try {
                 await exchange.createOrder(symbol, 'TAKE_PROFIT_MARKET', exitSide, quantity, tpPriceF, {
                     stopPrice: tpPriceF,
                     reduceOnly: true
                 });
-                console.log(`[EXECUTION] [${BOT_MODE}] TP posicionado a ${tpPriceF}`);
-                insertLog('STRATEGY_ARMED', `[${symbol}] FUTURES TP posicionado: ${tpPriceF}`);
+                console.log(`[EXECUTION] FUTURES TP at ${tpPriceF}`);
+                insertLog('STRATEGY_ARMED', `[${symbol}] FUTURES TP: ${tpPriceF}`);
             } catch (tErr) { 
-                console.error(`[EXECUTION] [${BOT_MODE}] Erro TP: ${tErr.message}`);
-                insertLog('ERROR', `[${symbol}] Erro ao armar TP em Futuros: ${tErr.message}`);
+                console.error(`[EXECUTION] FUTURES TP error: ${tErr.message}`);
+                insertLog('ERROR', `[${symbol}] TP arm failed: ${tErr.message}`);
             }
 
             try {
@@ -236,11 +274,11 @@ export async function executeTradeSequence(symbol, side, currentPrice, wss, stra
                     stopPrice: slPriceF,
                     reduceOnly: true
                 });
-                console.log(`[EXECUTION] [${BOT_MODE}] SL posicionado a ${slPriceF}`);
-                insertLog('STRATEGY_ARMED', `[${symbol}] FUTURES SL posicionado: ${slPriceF}`);
+                console.log(`[EXECUTION] FUTURES SL at ${slPriceF}`);
+                insertLog('STRATEGY_ARMED', `[${symbol}] FUTURES SL: ${slPriceF}`);
             } catch (sErr) { 
-                console.error(`[EXECUTION] [${BOT_MODE}] Erro SL: ${sErr.message}`);
-                insertLog('ERROR', `[${symbol}] Erro ao armar SL em Futuros: ${sErr.message}`);
+                console.error(`[EXECUTION] FUTURES SL error: ${sErr.message}`);
+                insertLog('ERROR', `[${symbol}] SL arm failed: ${sErr.message}`);
             }
         }
 
@@ -253,14 +291,15 @@ export async function executeTradeSequence(symbol, side, currentPrice, wss, stra
 
     } catch (error) {
         executionFailures++;
-        console.error(`[EXECUTION ENGINE] [${BOT_MODE}] Falha crítica (${executionFailures}/3): ${error.message}`);
-        insertLog('CRITICAL_ERROR', `Falha ao executar trade ${symbol}: ${error.message}`);
+        console.error(`[EXECUTION] Critical failure (${executionFailures}/3): ${error.message}`);
+        insertLog('CRITICAL_ERROR', `Trade execution failed for ${symbol}: ${error.message}`);
 
+        // ── STABILIZATION: Circuit breaker increased to 5 minutes ──
         if (executionFailures >= 3) {
-            console.error(`[EXECUTION] CIRCUIT BREAKER ATIVADO - Pausando trading por 60 segundos.`);
-            insertLog('CRITICAL_EXECUTION_PAUSE', 'Circuito interrompido devido a falhas consecutivas.');
-            circuitBreakerUntil = Date.now() + 60000;
-            executionFailures = 0; // Reset after pause starts
+            console.error(`[FAIL-SAFE] CIRCUIT BREAKER ACTIVATED — Trading paused for 5 minutes.`);
+            insertLog('CIRCUIT_BREAKER', 'Trading paused due to 3 consecutive execution failures.');
+            circuitBreakerUntil = Date.now() + 300000; // 5 minutes
+            executionFailures = 0;
         }
         return null;
     }

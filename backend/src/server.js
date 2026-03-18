@@ -5,9 +5,8 @@ import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import schedule from 'node-schedule';
 import apiRoutes from './routes/api.js';
-import { startBinanceWebSocket, flushAllWebSockets } from './services/binanceWs.js';
+import { startBinanceWebSocket } from './services/binanceWs.js';
 import { startLiquidationStream } from './services/liquidationWs.js';
-import { scanTopMarketOpportunities } from './data/marketScanner.js';
 import { syncPositionsFromExchange } from './execution/tradeMonitor.js';
 import { BOT_MODE, IS_SPOT } from './services/exchangeClient.js';
 import { getStrategySnapshot, displayStrategyPanel, saveStrategySnapshot } from './utils/strategySnapshot.js';
@@ -40,56 +39,38 @@ wss.on('connection', (ws) => {
   ws.send(JSON.stringify({ type: 'STATUS', data: `Connected to Bot Engine [${BOT_MODE}]` }));
 });
 
+// ── STABILIZATION: Fixed symbol whitelist (no dynamic scanner rotation) ──
+const ALLOWED_TARGETS = ['btcusdt', 'ethusdt', 'solusdt'];
+
 server.listen(PORT, async () => {
   const snapshot = getStrategySnapshot();
   displayStrategyPanel(snapshot);
   saveStrategySnapshot(snapshot);
 
   console.log(`🚀 Binance Bot Engine rodando na porta ${PORT} [ID: ${snapshot.strategyId}]`);
+  console.log(`[SCANNER] Symbols locked to: ${ALLOWED_TARGETS.map(t => t.toUpperCase()).join(', ')}`);
   console.log(IS_SPOT
     ? '🟦 MODO: SPOT  — sem leverage, apenas BUY, TP/SL via LIMIT orders'
     : '🟨 MODO: FUTURES — com leverage, BUY/SELL, TP/SL via STOP_MARKET orders'
   );
-  
-  // 1. Startup inicial: Roda scanner para pegar a melhor moeda atual
-  const topMoedas = await scanTopMarketOpportunities();
-  let targets = ['btcusdt']; // Fallback
-  
-  if (topMoedas.length > 0) {
-      targets = topMoedas.map(m => {
-          // SPOT symbols: "BTC/USDT" → "btcusdt"
-          // FUTURES symbols: "BTC/USDT:USDT" → "btcusdt"
-          return m.symbol.split(':')[0].replace('/', '').toLowerCase();
-      });
-  }
 
-  // 2. Inicia WSS nas moedas alvo
-  targets.forEach(t => startBinanceWebSocket(t, wss));
+  // 1. Start persistent WebSocket streams for allowed symbols only
+  ALLOWED_TARGETS.forEach(t => startBinanceWebSocket(t, wss));
 
-  // 3. Liquidation Stream: apenas em FUTURES (não relevante para Spot)
+  // 2. Liquidation Stream: apenas em FUTURES (filtered by liquidityEngine)
   if (!IS_SPOT) {
+      console.log('[LIQUIDITY] Liquidation stream active with candle/volume/trend filters');
       startLiquidationStream(wss);
   } else {
       console.log('ℹ️  Liquidation Feed desativado (modo SPOT)');
   }
 
-  // 4. Agendador (Node Schedule)
-  // Sincroniza posições perdidas (SL/TP) a cada 2 minutos
+  // 3. Position sync every 2 minutes (only scheduled job remaining)
   schedule.scheduleJob('*/2 * * * *', async () => {
       console.log('[WORKER] Sincronizando Exchange...');
       await syncPositionsFromExchange();
   });
 
-  // Roda scanner de Market Regime/Oportunidade a cada 30 minutos
-  schedule.scheduleJob('*/30 * * * *', async () => {
-      console.log('[WORKER] Disparando Scanner de Mercado rotativo...');
-      const moedas = await scanTopMarketOpportunities();
-      const newTargets = moedas.map(m => m.symbol.split(':')[0].replace('/', '').toLowerCase());
-      
-      console.log('[WORKER] Trocando streams para os novos líderes...');
-      flushAllWebSockets();
-      setTimeout(() => {
-          newTargets.forEach(t => startBinanceWebSocket(t, wss));
-      }, 2000);
-  });
+  // NOTE: 30-min scanner rotation REMOVED for stabilization.
+  // Streams are persistent — only BTC/ETH/SOL.
 });

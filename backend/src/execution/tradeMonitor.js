@@ -87,7 +87,7 @@ async function updateExchangeStop(symbol, entrySide, newStopPrice, quantity) {
  * Função para sincronizar Posições com a API REST 
  * Identificando StopLoss ou TakeProfits que já foram preenchidos (closed)
  */
-export async function syncPositionsFromExchange() {
+export async function syncPositionsFromExchange(wss = null) {
     try {
         if (IS_SPOT) {
             // SPOT: verifica ordens abertas por símbolo em vez de positions (que é exclusivo de futuros)
@@ -127,7 +127,7 @@ export async function syncPositionsFromExchange() {
                         }
                         
                         delete activeTrades[symbol];
-                        if (wss) broadcastMessage(wss, 'SYNC_UPDATE', { symbol, action: 'closed' });
+                if (wss) broadcastMessage(wss, 'SYNC_UPDATE', { symbol, action: 'closed' });
                     }
                 } catch (symErr) {
                     console.error(`[TRADE MONITOR] [${BOT_MODE || 'UNKNOWN'}] Erro ao sincronizar ${symbol}: ${symErr.message}`);
@@ -140,6 +140,7 @@ export async function syncPositionsFromExchange() {
         const positions = await exchange.fetchPositions();
         
         for (const symbol in activeTrades) {
+            const exchangePos = positions.find(p => p.symbol === symbol && Math.abs(parseFloat(p.contracts || p.positionAmt || 0)) > 0);
             if (!exchangePos) {
                 console.log(`[TRADE MONITOR] [FUTURES] Posição finalizada via API Sync para ${symbol}.`);
                 

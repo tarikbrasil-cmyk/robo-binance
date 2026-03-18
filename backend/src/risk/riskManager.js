@@ -1,30 +1,38 @@
 import { IS_SPOT } from '../services/exchangeClient.js';
 
+/**
+ * STABILIZATION: Risk Manager
+ * 
+ * Changes:
+ * - Drawdown threshold: 15% (was 12%)
+ * - Max consecutive losses: 3 (unchanged)
+ * - Removed confidence-based position scaling
+ * - Leverage capped at 5x (was 10x)
+ * - Max exposure: 10%
+ */
+
 export class RiskManager {
-    constructor(dbOrAnalytics) {
-        // Inicializa estado diário global em memória
+    constructor() {
         this.dailyStartEquity = 0; 
         this.consecutiveLosses = 0;
         
-        // Regras Hardcoded Iniciais
-        this.MAX_DAILY_DRAWDOWN = 0.12; // 12% max
+        // ── STABILIZATION: Conservative risk limits ──
+        this.MAX_DAILY_DRAWDOWN = 0.15; // 15% → stop bot
         this.MAX_CONSECUTIVE_LOSSES = 3;
+        this.MAX_EXPOSURE_PCT = 0.10; // 10% max account exposure
         
-        this.TP_PCT = 0.06; // 6%
-        this.SL_PCT = 0.03; // 3%
-        this.DEFAULT_LEVERAGE = 10;
+        this.DEFAULT_LEVERAGE = 5; // Reduced from 10
+        this.TP_PCT = 0.06;
+        this.SL_PCT = 0.03;
         
-        // Estado
         this.isKillSwitchActive = false;
+        this.totalOpenExposure = 0; // Track total USDT in open positions
     }
 
     setDailyStartEquity(equity) {
         this.dailyStartEquity = equity;
     }
 
-    /**
-     * Atualiza perdas e ganhos para gerir Drawdown Global e Múltiplos Loses
-     */
     registerTradeResult(pnlPercentage, currentEquity) {
         if (pnlPercentage < 0) {
             this.consecutiveLosses += 1;
@@ -32,32 +40,42 @@ export class RiskManager {
             this.consecutiveLosses = 0;
         }
 
-        // Calcula Drawdown diário
-        const currentDrawdown = (this.dailyStartEquity - currentEquity) / this.dailyStartEquity;
+        // Daily drawdown check
+        if (this.dailyStartEquity > 0) {
+            const currentDrawdown = (this.dailyStartEquity - currentEquity) / this.dailyStartEquity;
 
-        if (currentDrawdown >= this.MAX_DAILY_DRAWDOWN) {
-            console.error(`[KILL SWITCH] Drawdown de ${(currentDrawdown*100).toFixed(2)}% alcançou limite de 12%. Travando bot.`);
-            this.isKillSwitchActive = true;
+            if (currentDrawdown >= this.MAX_DAILY_DRAWDOWN) {
+                console.error(`[FAIL-SAFE] Drawdown ${(currentDrawdown*100).toFixed(2)}% >= ${this.MAX_DAILY_DRAWDOWN*100}%. Kill switch activated.`);
+                this.isKillSwitchActive = true;
+            }
         }
 
+        // Consecutive losses check
         if (this.consecutiveLosses >= this.MAX_CONSECUTIVE_LOSSES) {
-            console.error(`[KILL SWITCH] ${this.MAX_CONSECUTIVE_LOSSES} perdas consecutivas. Bot de Trading suspenso.`);
+            console.error(`[FAIL-SAFE] ${this.MAX_CONSECUTIVE_LOSSES} consecutive losses. Kill switch activated.`);
             this.isKillSwitchActive = true;
         }
+
+        // Log result
+        console.log(`[TRADE_RESULT] PnL: ${pnlPercentage >= 0 ? '+' : ''}${(pnlPercentage*100).toFixed(2)}% | Equity: $${currentEquity.toFixed(2)} | Consecutive Losses: ${this.consecutiveLosses}`);
     }
 
     resetDailyRiskFactors() {
         this.consecutiveLosses = 0;
         this.isKillSwitchActive = false;
-        console.log('[RISK MANAGER] Respostas de Risco resetadas pra novo ciclo.');
+        this.totalOpenExposure = 0;
+        console.log('[RISK] Daily risk factors reset.');
     }
 
     canOpenNewPosition(fundingRate = 0) {
-        if (this.isKillSwitchActive) return false;
+        if (this.isKillSwitchActive) {
+            console.warn('[RISK] Kill switch active. No new positions allowed.');
+            return false;
+        }
         
-        // Funding Rate só é relevante em Futuros
-        if (!IS_SPOT && Math.abs(fundingRate) > 0.0005) { // 0.05%
-            console.warn('[RISK MANAGER] Funding Rate muito alto. Operação cancelada.');
+        // Funding Rate filter (Futures only)
+        if (!IS_SPOT && Math.abs(fundingRate) > 0.0005) {
+            console.warn(`[RISK] Funding rate too high (${fundingRate}). Position blocked.`);
             return false;
         }
         
@@ -65,53 +83,31 @@ export class RiskManager {
     }
 
     /**
-     * Compounding Dinâmico de Exposição (Statistical Sizing)
-     * Usando uma variação de Confiança (0.5 a 1.0) para definir quanto da banca arriscar
+     * Check if adding a new position would exceed max exposure
      */
-    calculatePositionSize(availableBalance, confidenceScore = 1) {
-        let sizeRatio = 1.0; 
-
-        if (confidenceScore <= 0.55) sizeRatio = 0.40;
-        else if (confidenceScore <= 0.60) sizeRatio = 0.60;
-        else if (confidenceScore <= 0.70) sizeRatio = 0.80;
-
-        // Proteção Extra: Se o Drawdown atual já estiver amargo (> 8%), corta pela metade
-        const currentDrawdown = (this.dailyStartEquity - availableBalance) / this.dailyStartEquity;
-        if (currentDrawdown > 0.08) {
-            sizeRatio = sizeRatio * 0.5;
-            console.log(`[RISK MANAGER] [${IS_SPOT ? 'SPOT' : 'FUTURES'}] Drawdown Global alto (${(currentDrawdown*100).toFixed(1)}%). Posição cortada (Safe Mode)`);
+    wouldExceedExposure(positionSizeUSDT, accountBalance) {
+        if (accountBalance <= 0) return true;
+        const newExposure = (this.totalOpenExposure + positionSizeUSDT) / accountBalance;
+        if (newExposure > this.MAX_EXPOSURE_PCT) {
+            console.warn(`[RISK] Exposure would be ${(newExposure*100).toFixed(1)}% > max ${this.MAX_EXPOSURE_PCT*100}%. Position blocked.`);
+            return true;
         }
+        return false;
+    }
 
-        // Target Growth Logic
-        // SPOT: RIGIDAMENTE 1x leverage, sem short.
-        let currentLeverage = IS_SPOT ? 1 : this.DEFAULT_LEVERAGE;
-        let currentTp = IS_SPOT ? 0.03 : this.TP_PCT; // SPOT: alvo conservador de 3%
-        let currentSl = IS_SPOT ? 0.015 : this.SL_PCT; // SPOT: stop conservador de 1.5%
+    addExposure(positionSizeUSDT) {
+        this.totalOpenExposure += positionSizeUSDT;
+    }
 
-        if (!IS_SPOT && availableBalance > 500) {
-            // Futuros: Conta maior = Modo Conservador
-            currentLeverage = 5;
-            currentTp = 0.04;
-            currentSl = 0.02;
-        }
-
-        // Garantia absoluta para Spot (Double Check)
-        if (IS_SPOT) currentLeverage = 1;
-
-        this.currentRiskSetup = {
-            leverage: currentLeverage,
-            takeProfitPerc: currentTp,
-            stopLossPerc: currentSl
-        }
-
-        return availableBalance * sizeRatio;
+    removeExposure(positionSizeUSDT) {
+        this.totalOpenExposure = Math.max(0, this.totalOpenExposure - positionSizeUSDT);
     }
 
     getRiskParams() {
-        return this.currentRiskSetup || {
-            leverage: this.DEFAULT_LEVERAGE,
-            takeProfitPerc: this.TP_PCT,
-            stopLossPerc: this.SL_PCT
+        return {
+            leverage: IS_SPOT ? 1 : this.DEFAULT_LEVERAGE,
+            takeProfitPerc: IS_SPOT ? 0.03 : this.TP_PCT,
+            stopLossPerc: IS_SPOT ? 0.015 : this.SL_PCT
         };
     }
 }
