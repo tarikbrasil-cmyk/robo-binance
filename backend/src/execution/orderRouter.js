@@ -52,26 +52,23 @@ export async function executeTradeSequence(symbol, side, currentPrice, wss, stra
     }
 
     try {
-        const balanceInfo = await exchange.fetchBalance();
-        const config = loadStrategyConfig();
-        const availableBalance = IS_SPOT
-            ? (balanceInfo.free?.USDT || 0)
-            : (balanceInfo.total?.USDT || 0);
-
-        // Calculate total current exposure (USDT Notional)
-        const currentExposureUSDT = Object.values(activeTrades).reduce((sum, t) => {
-            return sum + (t.quantity * t.entryPrice);
-        }, 0);
+        // ── Funding Rate Filter ──
+        const fundingInfo = await exchange.fetchFundingRate(symbol);
+        const fundingThreshold = config.risk?.maxFundingRate || 0.05; // 0.05%
+        if (Math.abs(fundingInfo.fundingRate) > fundingThreshold) {
+             insertLog('FUNDING_REJECTED', `[${symbol}] rate=${fundingInfo.fundingRate}`);
+             return null;
+        }
 
         const positionalData = calculatePositionSize({
             accountBalance: availableBalance,
             entryPrice: currentPrice,
             atr: strategyData.indicator.atr,
-            stopATRMultiplier: 1.5, // PRO V1 Fixed
-            maxRiskPerTrade: 0.005, // 0.5% Fixed
+            stopATRMultiplier: strategyData.strategy === 'TREND_V2' ? 1.5 : 1.0,
+            maxRiskPerTrade: config.risk?.maxRiskPerTrade || 0.005,
             currentExposureUSDT,
             maxExposureLimit: config.risk?.maxAccountExposure || 0.10,
-            maxDrawdownLimit: config.general?.maxDrawdownStop || 0.15
+            maxDrawdownLimit: config.general?.maxDrawdownStop || 0.10
         });
 
         if (positionalData.positionSizeUSDT <= 0) {
@@ -80,96 +77,61 @@ export async function executeTradeSequence(symbol, side, currentPrice, wss, stra
         }
 
         const positionalUSDT = positionalData.positionSizeUSDT;
-
-        // ✅ USAR VALORES EXATOS DA ESTRATÉGIA PRO
         const stopLossPrice = strategyData.stopLossPrice;
         const takeProfitPrice = strategyData.takeProfitPrice;
+        const tp1Price = strategyData.tp1Price;
 
         const leverage = IS_SPOT ? 1 : (config?.trendStrategy?.leverage || 5);
-
         await exchange.loadMarkets();
 
         let quantity;
-
         if (IS_SPOT) {
             const rawQuantity = (positionalUSDT * 0.98) / currentPrice;
             quantity = parseFloat(exchange.amountToPrecision(symbol, rawQuantity));
         } else {
             await exchange.setLeverage(leverage, symbol);
             try { await exchange.setMarginMode('ISOLATED', symbol); } catch {}
-
-            const notional = positionalUSDT * 0.98;
-            const rawQuantity = notional / currentPrice;
+            const rawQuantity = (positionalUSDT * 0.98) / currentPrice;
             quantity = parseFloat(exchange.amountToPrecision(symbol, rawQuantity));
         }
 
         const market = exchange.market(symbol);
-        const minQty = market.limits?.amount?.min || 0;
-        const maxQty = market.limits?.amount?.max || Infinity;
-        const minNotional = market.limits?.cost?.min || 0;
-
-        if (quantity < minQty || quantity > maxQty || quantity * currentPrice < minNotional) {
-            insertLog('ORDER_REJECTED', `[${symbol}] invalid quantity`);
-            return null;
-        }
-
         const entryOrder = await exchange.createMarketOrder(symbol, side, quantity);
-        executionFailures = 0;
-
         const entryPrice = entryOrder.average || currentPrice;
+        const exitSide = side === 'BUY' ? 'SELL' : 'BUY';
 
-        // Exit side
-        const exitSide = IS_SPOT ? 'SELL' : (side === 'BUY' ? 'SELL' : 'BUY');
-
-        // ✅ Validação única e robusta (sem reescalar ATR no router)
-        if (side === 'BUY') {
-            if (takeProfitPrice <= entryPrice) {
-                console.warn(`[ROUTER] TP ${takeProfitPrice} <= Entry ${entryPrice}. Using original target.`);
-            }
-        }
-
-        const tpPriceF = parseFloat(exchange.priceToPrecision(symbol, takeProfitPrice));
         const slPriceF = parseFloat(exchange.priceToPrecision(symbol, stopLossPrice));
+        const tpFinalF = parseFloat(exchange.priceToPrecision(symbol, takeProfitPrice));
+        const tp1PriceF = tp1Price ? parseFloat(exchange.priceToPrecision(symbol, tp1Price)) : null;
 
-        // 🧠 Logs avançados PRO
-        console.log(`\n==================================================`);
-        console.log(`          PRO V1 EXECUTION SIGNAL`);
-        console.log(`==================================================`);
-        console.log(`Symbol:          ${symbol}`);
-        console.log(`Side:            ${side}`);
-        console.log(`Entry:           ${entryPrice.toFixed(2)}`);
-        console.log(`Stop:            ${slPriceF.toFixed(2)}`);
-        console.log(`TP:              ${tpPriceF.toFixed(2)}`);
-        console.log(`Position:        $${positionalUSDT.toFixed(2)}`);
-        console.log(`Risk:            0.50%`);
-        console.log(`==================================================\n`);
+        console.log(`\n[PRO V2] Executing ${strategyData.strategy} | Final TP: ${tpFinalF} | SL: ${slPriceF}`);
 
-        if (IS_SPOT) {
-            try {
-                const slLimitPrice = parseFloat(exchange.priceToPrecision(symbol, slPriceF * 0.995));
+        if (!IS_SPOT) {
+            // If TP1 exists (Trend Strategy), split the exit
+            if (tp1PriceF) {
+                const qty1 = parseFloat(exchange.amountToPrecision(symbol, quantity * 0.5));
+                const qty2 = parseFloat(exchange.amountToPrecision(symbol, quantity - qty1));
 
-                await exchange.privatePostOrderOco({
-                    symbol: symbol.replace('/', '').split(':')[0],
-                    side: exitSide,
-                    quantity,
-                    price: tpPriceF,
-                    stopPrice: slPriceF,
-                    stopLimitPrice: slLimitPrice,
-                    stopLimitTimeInForce: 'GTC'
+                // TP1 (50%)
+                await exchange.createOrder(symbol, 'TAKE_PROFIT_MARKET', exitSide, qty1, tp1PriceF, {
+                    stopPrice: tp1PriceF,
+                    reduceOnly: true
                 });
 
-            } catch {
-                await exchange.createOrder(symbol, 'stop_loss_limit', exitSide, quantity, slPriceF, {
-                    stopPrice: slPriceF
+                // Final TP (50%)
+                await exchange.createOrder(symbol, 'TAKE_PROFIT_MARKET', exitSide, qty2, tpFinalF, {
+                    stopPrice: tpFinalF,
+                    reduceOnly: true
+                });
+            } else {
+                // Regular TP for Range
+                await exchange.createOrder(symbol, 'TAKE_PROFIT_MARKET', exitSide, quantity, tpFinalF, {
+                    stopPrice: tpFinalF,
+                    reduceOnly: true
                 });
             }
 
-        } else {
-            await exchange.createOrder(symbol, 'TAKE_PROFIT_MARKET', exitSide, quantity, tpPriceF, {
-                stopPrice: tpPriceF,
-                reduceOnly: true
-            });
-
+            // Initial SL (100%)
             await exchange.createOrder(symbol, 'STOP_MARKET', exitSide, quantity, slPriceF, {
                 stopPrice: slPriceF,
                 reduceOnly: true
@@ -181,9 +143,11 @@ export async function executeTradeSequence(symbol, side, currentPrice, wss, stra
             side,
             entryPrice,
             quantity,
-            tpTarget: tpPriceF,
+            tpTarget: tpFinalF,
+            tp1Target: tp1PriceF,
             slTarget: slPriceF,
             leverage,
+            strategy: strategyData.strategy,
             timestamp: Date.now(),
             mode: BOT_MODE
         };

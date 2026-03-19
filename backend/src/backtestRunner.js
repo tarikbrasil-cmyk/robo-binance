@@ -78,11 +78,18 @@ async function runBacktest(symbol, startTime, endTime, balance, overrideConfig =
     let trades          = [];
     let debugLog        = [];
     let consecutiveWins = 0;
-    let maxBalance      = balance;
-
+    let currentDailyPnL = 0;
+    let lastDay = null;
+    let maxBalance = balance;
     const startIdx = 200; // ensure EMA200 is warm
 
     for (let i = startIdx; i < candles.length; i++) {
+        const currentDay = new Date(candles[i].ts).getUTCDate();
+        if (lastDay !== null && currentDay !== lastDay) {
+            currentDailyPnL = 0;
+        }
+        lastDay = currentDay;
+
         const tradeResult = simulateTrade(
             candles[i],
             balance,
@@ -92,12 +99,13 @@ async function runBacktest(symbol, startTime, endTime, balance, overrideConfig =
             config,
             candles,
             i,
-            consecutiveWins,
+            candles[i - 1], 
             maxBalance,
-            debugLog        // ← receives per-candle debug entries
+            currentDailyPnL
         );
 
         if (tradeResult) {
+            currentDailyPnL += parseFloat(tradeResult.pnl);
             trades.push(tradeResult);
             balance = tradeResult.newBalance;
 
@@ -198,6 +206,23 @@ function buildSummary(trades, finalBalance) {
     const avgLossNum = losses.length > 0 ? (grossLoss / losses.length) : 0;
     const expectancy = (winRateNum * avgWinNum) - (lossRateNum * avgLossNum);
 
+    // Sharpe Ratio Approximation (Daily)
+    const dailyReturns = [];
+    const tradesByDay = {};
+    trades.forEach(t => {
+        const day = new Date(t.ts).toISOString().split('T')[0];
+        if(!tradesByDay[day]) tradesByDay[day] = 0;
+        tradesByDay[day] += parseFloat(t.pnl);
+    });
+    Object.values(tradesByDay).forEach(pnl => dailyReturns.push(pnl / finalBalance));
+    
+    let sharpe = 0;
+    if (dailyReturns.length > 1) {
+        const mean = dailyReturns.reduce((a, b) => a + b) / dailyReturns.length;
+        const stdDev = Math.sqrt(dailyReturns.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / dailyReturns.length);
+        sharpe = stdDev !== 0 ? (mean / stdDev) * Math.sqrt(365) : 0; // Annualized
+    }
+
     return {
         trades:       trades.length,
         winRate:      (winRateNum * 100).toFixed(2) + '%',
@@ -205,6 +230,7 @@ function buildSummary(trades, finalBalance) {
         avgLoss:      (-avgLossNum).toFixed(4),
         profitFactor: isFinite(profitFactor) ? profitFactor.toFixed(3) : '∞',
         expectancy:   expectancy.toFixed(4),
+        sharpeRatio:  sharpe.toFixed(2),
         totalPnl:     totalPnl.toFixed(4),
         finalBalance: finalBalance.toFixed(4),
         maxLossTrade: maxLossPnl.toFixed(4),

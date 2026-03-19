@@ -21,18 +21,25 @@ export function calculatePositionSize({
     maxRiskPerTrade = 0.005, // 0.5% default
     maxLeverage = 5,
     currentDrawdown = 0,
-    maxDrawdownLimit = 0.15, // 15% default fallback
+    maxDrawdownLimit = 0.10, // PRO V2: 10% Limit
     currentExposureUSDT = 0,
     maxExposureLimit = 0.10, // 10% default
+    currentDailyLoss = 0,     // NEW: Cumulative PnL of the day
+    maxDailyLossLimit = 0.03, // 3% Limit
 }) {
     // ── 0. Drawdown Protection Gate ──
     if (currentDrawdown >= maxDrawdownLimit) {
         const reason = `DRAWDOWN_EXCEEDED (${(currentDrawdown * 100).toFixed(1)}% >= ${(maxDrawdownLimit * 100).toFixed(1)}%)`;
-        if (process.env.NODE_ENV === 'test') console.warn(`[Risk] ${reason}`);
         return { positionSizeUSDT: 0, reason };
     }
 
-    // ── 0.1 Exposure Limit Gate ──
+    // ── 0.1 Daily Loss Gate ──
+    if (currentDailyLoss <= -(accountBalance * maxDailyLossLimit)) {
+        const reason = `DAILY_LOSS_EXCEEDED (${(currentDailyLoss).toFixed(2)} <= -${(accountBalance * maxDailyLossLimit).toFixed(2)})`;
+        return { positionSizeUSDT: 0, reason };
+    }
+
+    // ── 0.2 Exposure Limit Gate ──
     if (currentExposureUSDT >= accountBalance * maxExposureLimit) {
         const reason = `EXPOSURE_LIMIT_REACHED (${(currentExposureUSDT).toFixed(0)} >= ${(accountBalance * maxExposureLimit).toFixed(0)})`;
         return { positionSizeUSDT: 0, reason };

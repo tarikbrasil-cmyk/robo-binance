@@ -58,6 +58,8 @@ export async function runAutomaticBenchmark(initialBalance = 1000) {
                         trades: result.summary.trades,
                         winRate: result.summary.winRate,
                         profitFactor: result.summary.profitFactor,
+                        expectancy: result.summary.expectancy,
+                        sharpeRatio: result.summary.sharpeRatio,
                         finalBalance: result.summary.finalBalance + ' USDT',
                         pnlPercent,
                         maxDrawdown: result.summary.maxDrawdown,

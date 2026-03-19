@@ -106,6 +106,7 @@ export function calculateIndicators(candles, config = null) {
         const emaFastSlope = (i > 0 && emaFast[i] !== null && emaFast[i-1] !== null) ? (emaFast[i] - emaFast[i-1]) : 0;
 
         indicators.push({
+            ts: candles[i].ts, // Added for cooldown/backtest consistency
             emaFast: emaFast[i],
             emaSlow: emaSlow[i],
             emaFastSlope,
@@ -133,36 +134,69 @@ export function detectMarketRegime(indicator, config) {
         indicator.adx === null || 
         indicator.emaFast === null || 
         indicator.emaSlow === null || 
-        indicator.atr === null || 
-        indicator.atrSma50 === null) {
+        indicator.atr === null) {
         return 'NEUTRAL';
     }
     
-    const { adx, atr, atrPercent } = indicator;
+    const { adx, atrPercent, emaFast, emaSlow, vwap } = indicator;
     const regimeConfig = config.regime;
     
-    // 1. Minimum Volatility Filter
-    if (atrPercent < (regimeConfig.minVolatilityPercent || 0.003)) {
-        return 'NEUTRAL'; // Too dead to trade
+    // 1. Low Volatility Filter
+    if (atrPercent < (regimeConfig.minVolatilityPercent || 0.001)) {
+        return 'LOW_VOL';
     }
 
-    // 2. ADX-based Regime
-    if (adx > regimeConfig.trendAdxThreshold) {
+    // 2. Trend Detection
+    const isTrending = adx > (regimeConfig.trendAdxThreshold || 25);
+    if (isTrending) {
         return 'TREND';
     }
     
-    if (adx < regimeConfig.rangingAdxThreshold) {
+    // 3. Range Detection
+    if (adx < (regimeConfig.rangingAdxThreshold || 20)) {
         return 'RANGE';
     }
     
     return 'NEUTRAL';
 }
 
+/**
+ * Basic Candle Patterns
+ */
+export function detectCandlePattern(candle, prevCandle) {
+    if (!prevCandle) return null;
+    
+    const body = Math.abs(candle.close - candle.open);
+    const prevBody = Math.abs(prevCandle.close - prevCandle.open);
+    
+    // Engulfing Bullish
+    if (candle.close > candle.open && prevCandle.close < prevCandle.open && 
+        candle.close > prevCandle.open && candle.open < prevCandle.close) {
+        return 'ENGULFING_BULLISH';
+    }
+    
+    // Engulfing Bearish
+    if (candle.close < candle.open && prevCandle.close > prevCandle.open && 
+        candle.close < prevCandle.open && candle.open > prevCandle.close) {
+        return 'ENGULFING_BEARISH';
+    }
+    
+    // Rejection Bullish (Pin bar/Hammer approx)
+    const lowerWick = Math.min(candle.open, candle.close) - candle.low;
+    if (lowerWick > body * 2) return 'REJECTION_BULLISH';
+
+    // Rejection Bearish
+    const upperWick = candle.high - Math.max(candle.open, candle.close);
+    if (upperWick > body * 2) return 'REJECTION_BEARISH';
+
+    return null;
+}
+
 export function isMarketConditionAllowed(indicator, candle, config) {
     // 1. Volume Confirmation
     if (indicator.volume !== null && indicator.volSma !== null) {
-        const volumeMultiplier = config?.trendStrategy?.volumeMultiplier ?? 1.2;
-        if (indicator.volume <= indicator.volSma * volumeMultiplier) {
+        const volumeMultiplier = config?.trendStrategy?.volumeMultiplier ?? 1.0;
+        if (indicator.volume < indicator.volSma * volumeMultiplier) {
             return false;
         }
     }
