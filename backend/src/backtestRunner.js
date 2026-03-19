@@ -192,12 +192,19 @@ function buildSummary(trades, finalBalance) {
         }
     }
 
+    const winRateNum = wins.length / trades.length;
+    const lossRateNum = 1 - winRateNum;
+    const avgWinNum = wins.length > 0 ? (grossWin / wins.length) : 0;
+    const avgLossNum = losses.length > 0 ? (grossLoss / losses.length) : 0;
+    const expectancy = (winRateNum * avgWinNum) - (lossRateNum * avgLossNum);
+
     return {
         trades:       trades.length,
-        winRate:      (wins.length / trades.length * 100).toFixed(2) + '%',
-        avgWin:       wins.length   > 0 ? (grossWin  / wins.length).toFixed(4)   : '0',
-        avgLoss:      losses.length > 0 ? (-grossLoss / losses.length).toFixed(4) : '0',
+        winRate:      (winRateNum * 100).toFixed(2) + '%',
+        avgWin:       avgWinNum.toFixed(4),
+        avgLoss:      (-avgLossNum).toFixed(4),
         profitFactor: isFinite(profitFactor) ? profitFactor.toFixed(3) : '∞',
+        expectancy:   expectancy.toFixed(4),
         totalPnl:     totalPnl.toFixed(4),
         finalBalance: finalBalance.toFixed(4),
         maxLossTrade: maxLossPnl.toFixed(4),

@@ -1,5 +1,5 @@
 import { isMarketConditionAllowed, detectMarketRegime } from '../strategy/regime_engine.js';
-import { evaluateTrendStrategy } from '../strategy/trend_strategy.js';
+import { evaluateTrendStrategyPro, updateTrailingStop } from '../strategy/trend_strategy_pro.js';
 import { calculatePositionSize } from '../risk/position_sizing.js';
 
 export function simulateTrade(
@@ -9,25 +9,24 @@ export function simulateTrade(
 ) {
     if (!indicator || !prevIndicator) return null;
 
-    // ── 1. Market filter ────────────────────────────────────────────────────
+    // ── 1. Market filter (UTC Time, etc.) ──────────────────────────────────
     if (!isMarketConditionAllowed(indicator, candle, config)) return null;
 
     // ── 2. Regime detection ─────────────────────────────────────────────────
     const regime = detectMarketRegime(indicator, config);
 
-    // ── 3. Strategy ─────────────────────────────────────────────────────────
-    const signalData = evaluateTrendStrategy(candle, indicator, prevIndicator, config, regime);
+    // ── 3. Strategy PRO V1 ──────────────────────────────────────────────────
+    const signalData = evaluateTrendStrategyPro(candle, indicator, prevIndicator, config, regime, symbol);
     if (!signalData) return null;
 
-    // ── 3. Position sizing ─────────────────────────────────────────────────
-    // BUG #5 FIX: Read leverage from config instead of hardcoded default
+    // ── 4. Position sizing ──────────────────────────────────────────────────
     const leverage = config.trendStrategy?.leverage ?? 5;
 
     const riskData = calculatePositionSize({
         accountBalance:   balance,
         entryPrice:       signalData.entryPrice,
         atr:              indicator.atr,
-        stopATRMultiplier: config.trendStrategy?.atrStopMultiplier ?? 1.5,
+        stopATRMultiplier: 1.5, // PRO V1 Fixed
         maxLeverage:      leverage,
         currentDrawdown:  maxBalance > 0 ? (maxBalance - balance) / maxBalance : 0,
         maxDrawdownLimit: config.general?.maxDrawdownStop ?? 0.15,
@@ -35,36 +34,31 @@ export function simulateTrade(
 
     if (!riskData || riskData.positionSizeUSDT <= 0) return null;
 
-    // ── 4. Entry with slippage ──────────────────────────────────────────────
-    // Slippage is applied to the entry price. NOT to be double-counted in fees.
+    // ── 5. Entry with slippage ──────────────────────────────────────────────
     const spread = config.general?.maxSpreadPercent ?? 0.0005;
 
     const entry = signalData.signal === 'BUY'
         ? signalData.entryPrice * (1 + spread)
         : signalData.entryPrice * (1 - spread);
 
-    // Adjust TP/SL relative to actual filled entry using absolute delta
-    // This is more accurate for ATR-based targets than price ratios
+    // Initial targets from strategy (adjusted by slippage)
     const delta = entry - signalData.entryPrice;
-    const adjustedTP = signalData.takeProfitPrice + delta;
-    const adjustedSL = signalData.stopLossPrice   + delta;
+    const initialTP = signalData.takeProfitPrice + delta;
+    const initialSL = signalData.stopLossPrice   + delta;
 
-    // ── 5. Realistic execution ──────────────────────────────────────────────
-    const tradeResult = validateTrade(
+    // ── 6. Realistic execution with Trailing Stop ───────────────────────────
+    const tradeResult = validateTradePro(
         candles.slice(currentIndex + 1),
         signalData.signal,
         entry,
-        adjustedTP,
-        adjustedSL
+        initialTP,
+        initialSL,
+        indicator.atr // passed for trailing logic
     );
 
-    // ── 6. Costs ────────────────────────────────────────────────────────────
-    // BUG #1/#2 FIX:
-    //   - Spread slippage is ALREADY applied to entry price above (no double count)
-    //   - Fee is taker fee on notional: 0.04% entry + 0.04% exit = 0.08% round-trip
-    //   - Do NOT multiply by spread again here
+    // ── 7. Costs ────────────────────────────────────────────────────────────
     const fee = 0.0004; // 0.04% taker fee per side
-    const totalFeeRate = fee * 2; // round-trip (entry + exit)
+    const totalFeeRate = fee * 2; 
 
     const gross = riskData.positionSizeUSDT * tradeResult.roe;
     const costs = riskData.positionSizeUSDT * totalFeeRate;
@@ -72,7 +66,6 @@ export function simulateTrade(
 
     const newBalance = balance + net;
 
-    // ── 7. BUG #3 FIX: Return complete trade object with all required fields ─
     return {
         symbol,
         side:           signalData.signal,
@@ -80,8 +73,8 @@ export function simulateTrade(
         regime,
         entryPrice:     entry,
         exitPrice:      tradeResult.exitPrice,
-        stopPrice:      adjustedSL,
-        takeProfitPrice: adjustedTP,
+        stopPrice:      initialSL,
+        takeProfitPrice: initialTP,
         roe:            (tradeResult.roe * 100).toFixed(4) + '%',
         pnl:            net.toFixed(4),
         newBalance,
@@ -90,6 +83,37 @@ export function simulateTrade(
         candlesElapsed: tradeResult.candlesElapsed,
         riskData,
     };
+}
+
+/**
+ * PRO VALIDATOR: Handles Trailing Stop and Ambiguous Candles
+ */
+function validateTradePro(futureCandles, side, entry, tp, sl, atr) {
+    let currentSL = sl;
+
+    for (let i = 0; i < futureCandles.length; i++) {
+        const c = futureCandles[i];
+
+        // 1. Update Trailing Stop based on price
+        currentSL = updateTrailingStop({ entryPrice: entry, side, slTarget: currentSL, atr }, c);
+
+        // 2. Check targets
+        const hitTP = side === 'BUY' ? c.high >= tp : c.low <= tp;
+        const hitSL = side === 'BUY' ? c.low <= currentSL : c.high >= currentSL;
+
+        if (hitTP && hitSL) {
+            // Ambiguous candle: prioritize SL for conservatism
+            return buildResult(side, entry, currentSL, c.ts, i + 1);
+        }
+
+        if (hitTP) return buildResult(side, entry, tp, c.ts, i + 1);
+        if (hitSL) return buildResult(side, entry, currentSL, c.ts, i + 1);
+    }
+
+    // Fallback: close at end of data
+    const last = futureCandles[futureCandles.length - 1];
+    if (!last) return { win: false, roe: 0, exitPrice: entry, exitTime: Date.now(), candlesElapsed: 1 };
+    return buildResult(side, entry, last.close, last.ts, futureCandles.length);
 }
 
 // 🔥 CORE FIXED ENGINE

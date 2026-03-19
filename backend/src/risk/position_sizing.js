@@ -22,11 +22,19 @@ export function calculatePositionSize({
     maxLeverage = 5,
     currentDrawdown = 0,
     maxDrawdownLimit = 0.15, // 15% default fallback
+    currentExposureUSDT = 0,
+    maxExposureLimit = 0.10, // 10% default
 }) {
     // ── 0. Drawdown Protection Gate ──
     if (currentDrawdown >= maxDrawdownLimit) {
         const reason = `DRAWDOWN_EXCEEDED (${(currentDrawdown * 100).toFixed(1)}% >= ${(maxDrawdownLimit * 100).toFixed(1)}%)`;
         if (process.env.NODE_ENV === 'test') console.warn(`[Risk] ${reason}`);
+        return { positionSizeUSDT: 0, reason };
+    }
+
+    // ── 0.1 Exposure Limit Gate ──
+    if (currentExposureUSDT >= accountBalance * maxExposureLimit) {
+        const reason = `EXPOSURE_LIMIT_REACHED (${(currentExposureUSDT).toFixed(0)} >= ${(accountBalance * maxExposureLimit).toFixed(0)})`;
         return { positionSizeUSDT: 0, reason };
     }
 
@@ -58,21 +66,19 @@ export function calculatePositionSize({
     // ── 3. Core formula ──
     let positionSizeUSDT = riskAmountUSDT / stopDistancePct;
 
-    // ── 4. Leverage cap ──
-    const maxPositionSizeUSDT = accountBalance * maxLeverage;
-    let positionClippedByLeverageCap = false;
-
-    if (positionSizeUSDT > maxPositionSizeUSDT) {
-        positionSizeUSDT = maxPositionSizeUSDT;
-        positionClippedByLeverageCap = true;
-    }
+    // ── 4. Leverage cap and Remaining Exposure ──
+    const remainingExposure = (accountBalance * maxExposureLimit) - currentExposureUSDT;
+    const maxPositionSizeByLeverage = accountBalance * maxLeverage;
+    
+    // Size is the minimum of (Risk-based size, Leverage cap, Remaining Exposure)
+    let finalPositionSize = Math.min(positionSizeUSDT, maxPositionSizeByLeverage, remainingExposure);
+    
+    let positionClipped = finalPositionSize < positionSizeUSDT;
+    positionSizeUSDT = finalPositionSize;
 
     // ── 5. Ensure expected loss <= risk amount ──
+    // (If clipped by exposure/leverage, loss will be even smaller than riskAmountUSDT)
     let expectedLossUSDT = positionSizeUSDT * stopDistancePct;
-    if (expectedLossUSDT > riskAmountUSDT) {
-        positionSizeUSDT = riskAmountUSDT / stopDistancePct;
-        expectedLossUSDT = riskAmountUSDT;
-    }
 
     // ── 6. Sanity check ──
     if (!isFinite(positionSizeUSDT) || positionSizeUSDT <= 0) {
@@ -93,6 +99,6 @@ export function calculatePositionSize({
         stopDistancePercent: stopDistancePct,
         stopDistanceClipped,
         leverageUsed: maxLeverage,
-        positionClippedByLeverageCap,
+        positionClipped,
     };
 }

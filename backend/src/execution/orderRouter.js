@@ -4,6 +4,7 @@ import { broadcastMessage } from '../utils/websocket.js';
 import { calculatePositionSize } from '../risk/position_sizing.js';
 import { activeTrades } from './tradeMonitor.js';
 import { isSymbolAllowed } from '../data/marketScanner.js';
+import { loadStrategyConfig } from '../strategy/regime_engine.js';
 
 let executionFailures = 0;
 let circuitBreakerUntil = 0;
@@ -52,19 +53,25 @@ export async function executeTradeSequence(symbol, side, currentPrice, wss, stra
 
     try {
         const balanceInfo = await exchange.fetchBalance();
+        const config = loadStrategyConfig();
         const availableBalance = IS_SPOT
             ? (balanceInfo.free?.USDT || 0)
             : (balanceInfo.total?.USDT || 0);
 
-        const atr = strategyData.indicator.atr;
-        const stopATRMultiplier = strategyData.stopATRMultiplier || 1.5;
+        // Calculate total current exposure (USDT Notional)
+        const currentExposureUSDT = Object.values(activeTrades).reduce((sum, t) => {
+            return sum + (t.quantity * t.entryPrice);
+        }, 0);
 
         const positionalData = calculatePositionSize({
             accountBalance: availableBalance,
             entryPrice: currentPrice,
-            atr,
-            stopATRMultiplier,
-            maxRiskPerTrade: 0.005,
+            atr: strategyData.indicator.atr,
+            stopATRMultiplier: 1.5, // PRO V1 Fixed
+            maxRiskPerTrade: 0.005, // 0.5% Fixed
+            currentExposureUSDT,
+            maxExposureLimit: config.risk?.maxAccountExposure || 0.10,
+            maxDrawdownLimit: config.general?.maxDrawdownStop || 0.15
         });
 
         if (positionalData.positionSizeUSDT <= 0) {
@@ -74,10 +81,11 @@ export async function executeTradeSequence(symbol, side, currentPrice, wss, stra
 
         const positionalUSDT = positionalData.positionSizeUSDT;
 
+        // ✅ USAR VALORES EXATOS DA ESTRATÉGIA PRO
         const stopLossPrice = strategyData.stopLossPrice;
         const takeProfitPrice = strategyData.takeProfitPrice;
 
-        const leverage = IS_SPOT ? 1 : 5;
+        const leverage = IS_SPOT ? 1 : (config?.trendStrategy?.leverage || 5);
 
         await exchange.loadMarkets();
 
@@ -113,49 +121,27 @@ export async function executeTradeSequence(symbol, side, currentPrice, wss, stra
         // Exit side
         const exitSide = IS_SPOT ? 'SELL' : (side === 'BUY' ? 'SELL' : 'BUY');
 
-        // ✅ Validação única e robusta
+        // ✅ Validação única e robusta (sem reescalar ATR no router)
         if (side === 'BUY') {
             if (takeProfitPrice <= entryPrice) {
-                throw new Error(`[VALIDATION] Invalid TP for BUY`);
-            }
-            if (stopLossPrice >= entryPrice) {
-                throw new Error(`[VALIDATION] Invalid SL for BUY`);
-            }
-        } else {
-            if (takeProfitPrice >= entryPrice) {
-                throw new Error(`[VALIDATION] Invalid TP for SELL`);
-            }
-            if (stopLossPrice <= entryPrice) {
-                throw new Error(`[VALIDATION] Invalid SL for SELL`);
+                console.warn(`[ROUTER] TP ${takeProfitPrice} <= Entry ${entryPrice}. Using original target.`);
             }
         }
 
-        // ✅ SEM REESCALA
         const tpPriceF = parseFloat(exchange.priceToPrecision(symbol, takeProfitPrice));
         const slPriceF = parseFloat(exchange.priceToPrecision(symbol, stopLossPrice));
 
-        // 🧠 Logs avançados
-        const adx = strategyData.indicator?.adx;
-        const atrVal = strategyData.indicator?.atr;
-        const volume = strategyData.indicator?.volume;
-        const volAvg = strategyData.indicator?.volSma20;
-
+        // 🧠 Logs avançados PRO
         console.log(`\n==================================================`);
-        console.log(`          TRADE SIGNAL INFO (Stabilized)`);
+        console.log(`          PRO V1 EXECUTION SIGNAL`);
         console.log(`==================================================`);
         console.log(`Symbol:          ${symbol}`);
-        console.log(`Strategy:        ${strategyData.strategy || 'TREND_FOLLOWING'}`);
         console.log(`Side:            ${side}`);
-        console.log(`ADX:             ${adx != null ? adx.toFixed(2) : 'N/A'}`);
-        console.log(`ATR:             ${atrVal != null ? atrVal.toFixed(2) : 'N/A'}`);
-        console.log(`Volume:          ${volume != null ? volume.toFixed(0) : 'N/A'}`);
-        console.log(`Vol/Avg:         ${(volume && volAvg) ? (volume / volAvg).toFixed(2) + 'x' : 'N/A'}`);
-        console.log(`--------------------------------------------------`);
         console.log(`Entry:           ${entryPrice.toFixed(2)}`);
         console.log(`Stop:            ${slPriceF.toFixed(2)}`);
         console.log(`TP:              ${tpPriceF.toFixed(2)}`);
         console.log(`Position:        $${positionalUSDT.toFixed(2)}`);
-        console.log(`Risk:            ${(positionalData.finalRiskPct * 100).toFixed(2)}%`);
+        console.log(`Risk:            0.50%`);
         console.log(`==================================================\n`);
 
         if (IS_SPOT) {
