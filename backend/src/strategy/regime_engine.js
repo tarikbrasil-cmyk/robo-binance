@@ -16,19 +16,23 @@ function padArray(targetLen, arr) {
     return [...padding, ...arr];
 }
 
-export function calculateIndicators(candles) {
+export function calculateIndicators(candles, config = null) {
     const highs = candles.map(c => c.high);
     const lows = candles.map(c => c.low);
     const closes = candles.map(c => c.close);
     const volumes = candles.map(c => c.volume);
     
-    const ema50 = padArray(candles.length, EMA.calculate({ period: 50, values: closes }));
-    const ema200 = padArray(candles.length, EMA.calculate({ period: 200, values: closes }));
+    const fastPeriod = config?.trendStrategy?.emaFast ?? 50;
+    const slowPeriod = config?.trendStrategy?.emaSlow ?? 200;
+    const volSmaPeriod = config?.trendStrategy?.volumeSma ?? 20;
+
+    const emaFast = padArray(candles.length, EMA.calculate({ period: fastPeriod, values: closes }));
+    const emaSlow = padArray(candles.length, EMA.calculate({ period: slowPeriod, values: closes }));
     const rsi = padArray(candles.length, RSI.calculate({ period: 14, values: closes }));
     const atr = padArray(candles.length, ATR.calculate({ period: 14, high: highs, low: lows, close: closes }));
     const adxObj = padArray(candles.length, ADX.calculate({ period: 14, high: highs, low: lows, close: closes }));
     // Volume SMA
-    const volSma20 = padArray(candles.length, SMA.calculate({ period: 20, values: volumes }));
+    const volSma = padArray(candles.length, SMA.calculate({ period: volSmaPeriod, values: volumes }));
     
     // filter nulls to safely pass array into another SMA
     const validAtr = atr.filter(a => a !== null);
@@ -99,12 +103,12 @@ export function calculateIndicators(candles) {
         
         const zscore = (currentStd && currentStd !== 0) ? (currentPrice - currentVwap) / currentStd : 0;
         const atrPercent = (currentPrice > 0) ? (currentAtr / currentPrice) : 0;
-        const emaSlope = (i > 0 && ema50[i] !== null && ema50[i-1] !== null) ? (ema50[i] - ema50[i-1]) : 0;
+        const emaFastSlope = (i > 0 && emaFast[i] !== null && emaFast[i-1] !== null) ? (emaFast[i] - emaFast[i-1]) : 0;
 
         indicators.push({
-            ema50: ema50[i],
-            ema200: ema200[i],
-            emaSlope,
+            emaFast: emaFast[i],
+            emaSlow: emaSlow[i],
+            emaFastSlope,
             rsi: rsi[i],
             atr: currentAtr,
             atrPercent,
@@ -112,7 +116,7 @@ export function calculateIndicators(candles) {
             vwap: currentVwap,
             vwapStdDev: currentStd,
             zscore,
-            volSma20: volSma20[i],
+            volSma: volSma[i],
             atrSma50: atrSma50[i],
             atrSma100: atrSma100[i],
             volume: volumes[i],
@@ -127,8 +131,8 @@ export function calculateIndicators(candles) {
 export function detectMarketRegime(indicator, config) {
     if (!indicator || 
         indicator.adx === null || 
-        indicator.ema50 === null || 
-        indicator.ema200 === null || 
+        indicator.emaFast === null || 
+        indicator.emaSlow === null || 
         indicator.atr === null || 
         indicator.atrSma50 === null) {
         return 'NEUTRAL';
@@ -155,9 +159,10 @@ export function detectMarketRegime(indicator, config) {
 }
 
 export function isMarketConditionAllowed(indicator, candle, config) {
-    // 1. Volume Confirmation (V2: volume > 1.2 * SMA20)
-    if (indicator.volume !== null && indicator.volSma20 !== null) {
-        if (indicator.volume <= indicator.volSma20 * 1.2) {
+    // 1. Volume Confirmation
+    if (indicator.volume !== null && indicator.volSma !== null) {
+        const volumeMultiplier = config?.trendStrategy?.volumeMultiplier ?? 1.2;
+        if (indicator.volume <= indicator.volSma * volumeMultiplier) {
             return false;
         }
     }

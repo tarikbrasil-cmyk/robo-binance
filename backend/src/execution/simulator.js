@@ -1,4 +1,4 @@
-import { isMarketConditionAllowed } from '../strategy/regime_engine.js';
+import { isMarketConditionAllowed, detectMarketRegime } from '../strategy/regime_engine.js';
 import { evaluateTrendStrategy } from '../strategy/trend_strategy.js';
 import { calculatePositionSize } from '../risk/position_sizing.js';
 
@@ -16,57 +16,78 @@ export function simulateTrade(
     const signalData = evaluateTrendStrategy(candle, indicator, prevIndicator, config);
     if (!signalData) return null;
 
+    // ── 2b. Regime detection ─────────────────────────────────────────────────
+    const regime = detectMarketRegime(indicator, config);
+
     // ── 3. Position sizing ─────────────────────────────────────────────────
+    // BUG #5 FIX: Read leverage from config instead of hardcoded default
+    const leverage = config.trendStrategy?.leverage ?? 5;
+
     const riskData = calculatePositionSize({
-        accountBalance: balance,
-        entryPrice: signalData.entryPrice,
-        atr: indicator.atr,
+        accountBalance:   balance,
+        entryPrice:       signalData.entryPrice,
+        atr:              indicator.atr,
         stopATRMultiplier: config.trendStrategy?.atrStopMultiplier ?? 1.5,
-        config,
-        indicator,
-        historicalWinRate: 0.55,
-        historicalRewardRisk: 1.5,
-        consecutiveWins,
-        currentDrawdown: maxBalance > 0 ? (maxBalance - balance) / maxBalance : 0,
+        maxLeverage:      leverage,
+        currentDrawdown:  maxBalance > 0 ? (maxBalance - balance) / maxBalance : 0,
+        maxDrawdownLimit: config.general?.maxDrawdownStop ?? 0.15,
     });
 
-    if (riskData.positionSizeUSDT <= 0) return null;
+    if (!riskData || riskData.positionSizeUSDT <= 0) return null;
 
     // ── 4. Entry with slippage ──────────────────────────────────────────────
+    // Slippage is applied to the entry price. NOT to be double-counted in fees.
     const spread = config.general?.maxSpreadPercent ?? 0.0005;
 
     const entry = signalData.signal === 'BUY'
         ? signalData.entryPrice * (1 + spread)
         : signalData.entryPrice * (1 - spread);
 
+    // Adjust TP/SL relative to actual filled entry
+    const slipRatio = entry / signalData.entryPrice;
+    const adjustedTP = signalData.takeProfitPrice * slipRatio;
+    const adjustedSL = signalData.stopLossPrice   * slipRatio;
+
     // ── 5. Realistic execution ──────────────────────────────────────────────
     const tradeResult = validateTrade(
         candles.slice(currentIndex + 1),
         signalData.signal,
         entry,
-        signalData.takeProfitPrice,
-        signalData.stopLossPrice
+        adjustedTP,
+        adjustedSL
     );
 
     // ── 6. Costs ────────────────────────────────────────────────────────────
-    const fee = 0.0004;
-    const totalCostRate = (fee + spread) * 2;
+    // BUG #1/#2 FIX:
+    //   - Spread slippage is ALREADY applied to entry price above (no double count)
+    //   - Fee is taker fee on notional: 0.04% entry + 0.04% exit = 0.08% round-trip
+    //   - Do NOT multiply by spread again here
+    const fee = 0.0004; // 0.04% taker fee per side
+    const totalFeeRate = fee * 2; // round-trip (entry + exit)
 
     const gross = riskData.positionSizeUSDT * tradeResult.roe;
-    const costs = riskData.positionSizeUSDT * totalCostRate;
+    const costs = riskData.positionSizeUSDT * totalFeeRate;
     const net   = gross - costs;
 
     const newBalance = balance + net;
 
+    // ── 7. BUG #3 FIX: Return complete trade object with all required fields ─
     return {
         symbol,
-        side: signalData.signal,
-        entryPrice: entry,
-        exitPrice: tradeResult.exitPrice,
-        roe: (tradeResult.roe * 100).toFixed(4) + '%',
-        pnl: net.toFixed(4),
+        side:           signalData.signal,
+        strategy:       signalData.strategy,
+        regime,
+        entryPrice:     entry,
+        exitPrice:      tradeResult.exitPrice,
+        stopPrice:      adjustedSL,
+        takeProfitPrice: adjustedTP,
+        roe:            (tradeResult.roe * 100).toFixed(4) + '%',
+        pnl:            net.toFixed(4),
         newBalance,
-        ts: candle.ts,
+        ts:             candle.ts,
+        exitTime:       tradeResult.exitTime,
+        candlesElapsed: tradeResult.candlesElapsed,
+        riskData,
     };
 }
 
@@ -77,10 +98,10 @@ function validateTrade(futureCandles, side, entry, tp, sl) {
 
         const hitTP = side === 'BUY'
             ? c.high >= tp
-            : c.low <= tp;
+            : c.low  <= tp;
 
         const hitSL = side === 'BUY'
-            ? c.low <= sl
+            ? c.low  <= sl
             : c.high >= sl;
 
         // 🧠 CASO AMBÍGUO (os dois no mesmo candle)
@@ -99,7 +120,7 @@ function validateTrade(futureCandles, side, entry, tp, sl) {
         }
     }
 
-    // 🟡 FALLBACK CORRIGIDO (ANTES ERA O BUG)
+    // 🟡 FALLBACK: Trade não fechou por TP/SL — fecha no último candle disponível
     const last = futureCandles[futureCandles.length - 1];
 
     if (!last) {
@@ -113,7 +134,6 @@ function validateTrade(futureCandles, side, entry, tp, sl) {
     }
 
     const exit = last.close;
-
     return buildResult(side, entry, exit, last.ts, futureCandles.length);
 }
 

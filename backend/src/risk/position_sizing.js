@@ -1,14 +1,17 @@
 /**
  * STABILIZATION: Simplified Position Sizing
- * 
+ *
  * Core formula: position_size = (balance * risk_per_trade) / stop_distance_pct
- * 
+ *
+ * BUG #5 FIX: maxLeverage is now always passed explicitly by the caller (simulator.js)
+ * using the value from config.trendStrategy.leverage.
+ * The default of 5 remains as a safe fallback.
+ *
  * Removed: Kelly Criterion, Volatility Scaling, Anti-Martingale
  * Kept: Drawdown gate, min stop distance guard, leverage cap, sanity checks
  */
 
 const MIN_STOP_DISTANCE_PCT = 0.002; // 0.2% minimum stop distance
-const MAX_DRAWDOWN = 0.15; // 15% → stop trading
 
 export function calculatePositionSize({
     accountBalance,
@@ -18,10 +21,11 @@ export function calculatePositionSize({
     maxRiskPerTrade = 0.005, // 0.5% default
     maxLeverage = 5,
     currentDrawdown = 0,
+    maxDrawdownLimit = 0.15, // 15% default fallback
 }) {
     // ── 0. Drawdown Protection Gate ──
-    if (currentDrawdown >= MAX_DRAWDOWN) {
-        return { positionSizeUSDT: 0, reason: `DRAWDOWN_EXCEEDED (${(currentDrawdown * 100).toFixed(1)}% >= ${MAX_DRAWDOWN * 100}%)` };
+    if (currentDrawdown >= maxDrawdownLimit) {
+        return { positionSizeUSDT: 0, reason: `DRAWDOWN_EXCEEDED (${(currentDrawdown * 100).toFixed(1)}% >= ${(maxDrawdownLimit * 100).toFixed(1)}%)` };
     }
 
     // ── 1. Risk per trade ──

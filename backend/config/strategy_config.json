@@ -1,7 +1,7 @@
 {
   "general": {
     "strategyName": "Stabilized Trend Following V1",
-    "cooldownMinutes": 30,
+    "cooldownMinutes": 10,
     "maxSpreadPercent": 0.0005,
     "maxDailyLoss": 0.05,
     "maxDrawdownStop": 0.15,
@@ -24,6 +24,11 @@
   "risk": {
     "maxAccountExposure": 0.10,
     "maxRiskPerTrade": 0.005
+  },
+  "regime": {
+    "minVolatilityPercent": 0.003,
+    "trendAdxThreshold": 25,
+    "rangingAdxThreshold": 20
   },
   "allowedSymbols": [
     "BTC/USDT",

@@ -73,7 +73,7 @@ async function runBacktest(symbol, startTime, endTime, balance, overrideConfig =
     console.log(`[backtestRunner] ${candles.length} candles carregados para ${symbol}.`);
 
     const config     = overrideConfig ?? loadStrategyConfig();
-    const indicators = calculateIndicators(candles);
+    const indicators = calculateIndicators(candles, config);
 
     let trades          = [];
     let debugLog        = [];
@@ -109,13 +109,22 @@ async function runBacktest(symbol, startTime, endTime, balance, overrideConfig =
                 consecutiveWins = 0;
             }
 
-            if (tradeResult.candlesElapsed > 0) {
-                i += tradeResult.candlesElapsed - 1;
+            // BUG #4 FIX: Avoid double-skip.
+            // candlesElapsed already advances i to the trade close candle.
+            // Add cooldown ONLY if trade closed faster than the cooldown window.
+            // This prevents excessively sparse trades in high-frequency periods.
+            const cooldownFrames = config.general?.cooldownMinutes ?? 30;
+            const elapsed = tradeResult.candlesElapsed ?? 0;
+
+            if (elapsed > 0) {
+                i += elapsed - 1;
             }
 
-            // Cooldown
-            const cooldownFrames = config.general?.cooldownMinutes ?? 30;
-            i += cooldownFrames;
+            // Only add remaining cooldown if the trade closed before cooldown expired
+            const remainingCooldown = cooldownFrames - elapsed;
+            if (remainingCooldown > 0) {
+                i += remainingCooldown;
+            }
         }
 
         if (i % 500 === 0 || i >= candles.length - 1) {

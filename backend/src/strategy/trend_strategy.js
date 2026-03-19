@@ -14,24 +14,24 @@
  * SL = 3%
  */
 export function evaluateTrendStrategy(candle, currentIndicator, previousIndicator, config) {
-    if (!currentIndicator || currentIndicator.ema50 === null || currentIndicator.ema200 === null || currentIndicator.adx === null) {
+    if (!currentIndicator || currentIndicator.emaFast === null || currentIndicator.emaSlow === null || currentIndicator.adx === null) {
         return null;
     }
-    if (!previousIndicator || previousIndicator.ema50 === null || previousIndicator.ema200 === null) {
+    if (!previousIndicator || previousIndicator.emaFast === null || previousIndicator.emaSlow === null) {
         return null; // Await previous to calc crossing
     }
 
     const settings = config.trendStrategy;
     
-    const ema50 = currentIndicator.ema50;
-    const ema200 = currentIndicator.ema200;
+    const emaFast = currentIndicator.emaFast;
+    const emaSlow = currentIndicator.emaSlow;
     const adx = currentIndicator.adx;
-    const prevEma50 = previousIndicator.ema50;
-    const prevEma200 = previousIndicator.ema200;
+    const prevEmaFast = previousIndicator.emaFast;
+    const prevEmaSlow = previousIndicator.emaSlow;
     const price = candle.close;
 
-    const crossBullish = prevEma50 <= prevEma200 && ema50 > ema200;
-    const crossBearish = prevEma50 >= prevEma200 && ema50 < ema200;
+    const crossBullish = prevEmaFast <= prevEmaSlow && emaFast > emaSlow;
+    const crossBearish = prevEmaFast >= prevEmaSlow && emaFast < emaSlow;
 
     const atr = currentIndicator.atr;
 
