@@ -12,12 +12,12 @@ export function simulateTrade(
     // ── 1. Market filter ────────────────────────────────────────────────────
     if (!isMarketConditionAllowed(indicator, candle, config)) return null;
 
-    // ── 2. Strategy ─────────────────────────────────────────────────────────
-    const signalData = evaluateTrendStrategy(candle, indicator, prevIndicator, config);
-    if (!signalData) return null;
-
-    // ── 2b. Regime detection ─────────────────────────────────────────────────
+    // ── 2. Regime detection ─────────────────────────────────────────────────
     const regime = detectMarketRegime(indicator, config);
+
+    // ── 3. Strategy ─────────────────────────────────────────────────────────
+    const signalData = evaluateTrendStrategy(candle, indicator, prevIndicator, config, regime);
+    if (!signalData) return null;
 
     // ── 3. Position sizing ─────────────────────────────────────────────────
     // BUG #5 FIX: Read leverage from config instead of hardcoded default
@@ -43,10 +43,11 @@ export function simulateTrade(
         ? signalData.entryPrice * (1 + spread)
         : signalData.entryPrice * (1 - spread);
 
-    // Adjust TP/SL relative to actual filled entry
-    const slipRatio = entry / signalData.entryPrice;
-    const adjustedTP = signalData.takeProfitPrice * slipRatio;
-    const adjustedSL = signalData.stopLossPrice   * slipRatio;
+    // Adjust TP/SL relative to actual filled entry using absolute delta
+    // This is more accurate for ATR-based targets than price ratios
+    const delta = entry - signalData.entryPrice;
+    const adjustedTP = signalData.takeProfitPrice + delta;
+    const adjustedSL = signalData.stopLossPrice   + delta;
 
     // ── 5. Realistic execution ──────────────────────────────────────────────
     const tradeResult = validateTrade(

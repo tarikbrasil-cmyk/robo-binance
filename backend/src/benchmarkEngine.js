@@ -41,7 +41,11 @@ export async function runAutomaticBenchmark(initialBalance = 1000) {
             console.log(`  (${sIdx + 1}/${benchmarkSymbols.length}) Rodando: ${symbol}...`);
 
             try {
-                const result = await runBacktestProgrammatic(symbol, period.start, period.end, initialBalance);
+                // Transparency Mode: Override drawdown stop for benchmark to see full performance
+                const benchmarkConfig = { ...strategySnapshot };
+                benchmarkConfig.general = { ...benchmarkConfig.general, maxDrawdownStop: 0.99 };
+
+                const result = await runBacktestProgrammatic(symbol, period.start, period.end, initialBalance, benchmarkConfig);
                 
                 if (result && result.summary) {
                     const pnlPercent = ((result.finalBalance - initialBalance) / initialBalance * 100).toFixed(2) + '%';

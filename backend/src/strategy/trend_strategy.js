@@ -13,7 +13,7 @@
  * TP = 6%
  * SL = 3%
  */
-export function evaluateTrendStrategy(candle, currentIndicator, previousIndicator, config) {
+export function evaluateTrendStrategy(candle, currentIndicator, previousIndicator, config, regime = 'TREND') {
     if (!currentIndicator || currentIndicator.emaFast === null || currentIndicator.emaSlow === null || currentIndicator.adx === null) {
         return null;
     }
@@ -33,12 +33,22 @@ export function evaluateTrendStrategy(candle, currentIndicator, previousIndicato
     const crossBullish = prevEmaFast <= prevEmaSlow && emaFast > emaSlow;
     const crossBearish = prevEmaFast >= prevEmaSlow && emaFast < emaSlow;
 
+    // ── Continuity (Pullback) Logic ──
+    // If already in trend and price touches EMA support/resistance
+    const isBullishTrend = emaFast > emaSlow && adx > settings.adxThreshold;
+    const isBearishTrend = emaFast < emaSlow && adx > settings.adxThreshold;
+    
+    // Pullback criteria: price low/high near EMA and RSI not extreme
+    const pullbackLong = isBullishTrend && candle.low <= emaFast * 1.001 && price > emaFast && currentIndicator.rsi < 65;
+    const pullbackShort = isBearishTrend && candle.high >= emaFast * 0.999 && price < emaFast && currentIndicator.rsi > 35;
+
     const atr = currentIndicator.atr;
 
-    if (adx > settings.adxThreshold) {
-        if (crossBullish) {
+    // ── Final Signal Decision ──
+    if (regime === 'TREND') {
+        if (crossBullish || pullbackLong) {
             return {
-                strategy: 'EMA_TREND',
+                strategy: crossBullish ? 'EMA_CROSS' : 'EMA_PULLBACK',
                 signal: 'BUY',
                 entryPrice: price,
                 takeProfitPrice: price + (atr * settings.atrTakeProfitMultiplier),
@@ -46,9 +56,9 @@ export function evaluateTrendStrategy(candle, currentIndicator, previousIndicato
             };
         }
 
-        if (crossBearish) {
+        if (crossBearish || pullbackShort) {
             return {
-                strategy: 'EMA_TREND',
+                strategy: crossBearish ? 'EMA_CROSS' : 'EMA_PULLBACK',
                 signal: 'SELL',
                 entryPrice: price,
                 takeProfitPrice: price - (atr * settings.atrTakeProfitMultiplier),

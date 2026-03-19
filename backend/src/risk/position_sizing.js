@@ -25,7 +25,9 @@ export function calculatePositionSize({
 }) {
     // ── 0. Drawdown Protection Gate ──
     if (currentDrawdown >= maxDrawdownLimit) {
-        return { positionSizeUSDT: 0, reason: `DRAWDOWN_EXCEEDED (${(currentDrawdown * 100).toFixed(1)}% >= ${(maxDrawdownLimit * 100).toFixed(1)}%)` };
+        const reason = `DRAWDOWN_EXCEEDED (${(currentDrawdown * 100).toFixed(1)}% >= ${(maxDrawdownLimit * 100).toFixed(1)}%)`;
+        if (process.env.NODE_ENV === 'test') console.warn(`[Risk] ${reason}`);
+        return { positionSizeUSDT: 0, reason };
     }
 
     // ── 1. Risk per trade ──
