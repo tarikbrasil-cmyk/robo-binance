@@ -35,9 +35,8 @@ export function displayStrategyPanel(snapshot) {
     console.log('\n--- Trend Following Strategy ---');
     if (snapshot.trendStrategy) {
         console.log(`EMA Fast/Slow:          ${snapshot.trendStrategy.emaFast} / ${snapshot.trendStrategy.emaSlow}`);
-        console.log(`ADX Threshold:          ${snapshot.trendStrategy.adxThreshold}`);
-        console.log(`RSI Levels (O/O):       ${snapshot.trendStrategy.rsiOversold} / ${snapshot.trendStrategy.rsiOverbought}`);
-        console.log(`ATR Stop / TP Multi:    ${snapshot.trendStrategy.atrStopMultiplier} / ${snapshot.trendStrategy.atrTakeProfitMultiplier}`);
+        console.log(`ADX Threshold:          ${snapshot.regime?.trendAdxThreshold}`);
+        console.log(`Min Volatility:         ${snapshot.regime?.minVolatilityPercent * 100}%`);
         console.log(`Volume Multiplier:      ${snapshot.trendStrategy.volumeMultiplier}x`);
         console.log(`Preferred Leverage:     ${snapshot.trendStrategy.leverage}x`);
     } else {

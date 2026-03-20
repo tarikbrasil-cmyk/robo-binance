@@ -78,6 +78,8 @@ async function runBacktest(symbol, startTime, endTime, balance, overrideConfig =
     let trades          = [];
     let debugLog        = [];
     let consecutiveWins = 0;
+    let consecutiveLosses = 0;
+    let maxConsecutiveLosses = 0;
     let currentDailyPnL = 0;
     let lastDay = null;
     let maxBalance = balance;
@@ -101,7 +103,8 @@ async function runBacktest(symbol, startTime, endTime, balance, overrideConfig =
             i,
             candles[i - 1], 
             maxBalance,
-            currentDailyPnL
+            currentDailyPnL,
+            indicators // Pass full array
         );
 
         if (tradeResult) {
@@ -113,8 +116,18 @@ async function runBacktest(symbol, startTime, endTime, balance, overrideConfig =
 
             if (parseFloat(tradeResult.pnl) > 0) {
                 consecutiveWins++;
+                consecutiveLosses = 0;
             } else {
                 consecutiveWins = 0;
+                consecutiveLosses++;
+                if (consecutiveLosses > maxConsecutiveLosses) maxConsecutiveLosses = consecutiveLosses;
+                
+                // KILL SWITCH: 3 losses in a row -> pause 12h (approx 720 1m candles)
+                if (consecutiveLosses >= (config.risk?.killSwitchLosses || 3)) {
+                    const pauseMins = (config.risk?.killSwitchPauseHours || 12) * 60;
+                    i += pauseMins;
+                    consecutiveLosses = 0; // reset after pause
+                }
             }
 
             // BUG #4 FIX: Avoid double-skip.
@@ -162,7 +175,7 @@ async function runBacktest(symbol, startTime, endTime, balance, overrideConfig =
     console.log(`[backtestRunner] Logs:\n  CSV  → ${logFileCSV}\n  JSON → ${logFileJSON}\n  Debug NDJSON → ${debugDir}`);
 
     // ── Summary ────────────────────────────────────────────────────────────
-    const summary = buildSummary(trades, balance);
+    const summary = buildSummary(trades, balance, maxConsecutiveLosses);
     if (trades.length < 5) {
         console.warn('\n⚠️  WARNING: Strategy generated too few trades for statistical validation.');
     }
@@ -173,7 +186,7 @@ async function runBacktest(symbol, startTime, endTime, balance, overrideConfig =
 /**
  * Build a statistics summary from the completed trade list.
  */
-function buildSummary(trades, finalBalance) {
+function buildSummary(trades, finalBalance, maxConsecutiveLosses = 0) {
     if (trades.length === 0) return null;
 
     const pnls        = trades.map(t => parseFloat(t.pnl));
@@ -234,7 +247,8 @@ function buildSummary(trades, finalBalance) {
         totalPnl:     totalPnl.toFixed(4),
         finalBalance: finalBalance.toFixed(4),
         maxLossTrade: maxLossPnl.toFixed(4),
-        maxDrawdown:  (maxDD * 100).toFixed(2) + '%'
+        maxDrawdown:  (maxDD * 100).toFixed(2) + '%',
+        maxConsecutiveLosses
     };
 }
 

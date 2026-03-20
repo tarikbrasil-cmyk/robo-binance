@@ -26,6 +26,7 @@ export class RiskManager {
         this.SL_PCT = 0.03;
         
         this.isKillSwitchActive = false;
+        this.killSwitchUnlockTs = 0;
         this.totalOpenExposure = 0; // Track total USDT in open positions
     }
 
@@ -34,6 +35,7 @@ export class RiskManager {
     }
 
     registerTradeResult(pnlPercentage, currentEquity) {
+        const now = Date.now();
         if (pnlPercentage < 0) {
             this.consecutiveLosses += 1;
         } else {
@@ -45,15 +47,17 @@ export class RiskManager {
             const currentDrawdown = (this.dailyStartEquity - currentEquity) / this.dailyStartEquity;
 
             if (currentDrawdown >= this.MAX_DAILY_DRAWDOWN) {
-                console.error(`[FAIL-SAFE] Drawdown ${(currentDrawdown*100).toFixed(2)}% >= ${this.MAX_DAILY_DRAWDOWN*100}%. Kill switch activated.`);
+                console.error(`[FAIL-SAFE] Drawdown ${(currentDrawdown*100).toFixed(2)}% >= ${this.MAX_DAILY_DRAWDOWN*100}%. Permanent kill switch activated.`);
                 this.isKillSwitchActive = true;
             }
         }
 
-        // Consecutive losses check
+        // Consecutive losses check: 12-hour pause
         if (this.consecutiveLosses >= this.MAX_CONSECUTIVE_LOSSES) {
-            console.error(`[FAIL-SAFE] ${this.MAX_CONSECUTIVE_LOSSES} consecutive losses. Kill switch activated.`);
-            this.isKillSwitchActive = true;
+            const pauseHours = 12;
+            this.killSwitchUnlockTs = now + (pauseHours * 60 * 60 * 1000);
+            console.error(`[FAIL-SAFE] ${this.MAX_CONSECUTIVE_LOSSES} consecutive losses. Kill switch activated for ${pauseHours}h (until ${new Date(this.killSwitchUnlockTs).toISOString()}).`);
+            this.consecutiveLosses = 0; // Reset counter after starting pause
         }
 
         // Log result
@@ -63,13 +67,20 @@ export class RiskManager {
     resetDailyRiskFactors() {
         this.consecutiveLosses = 0;
         this.isKillSwitchActive = false;
+        this.killSwitchUnlockTs = 0;
         this.totalOpenExposure = 0;
         console.log('[RISK] Daily risk factors reset.');
     }
 
     canOpenNewPosition(fundingRate = 0) {
         if (this.isKillSwitchActive) {
-            console.warn('[RISK] Kill switch active. No new positions allowed.');
+            console.warn('[RISK] Permanent Kill switch active. No new positions allowed.');
+            return false;
+        }
+
+        if (this.killSwitchUnlockTs > 0 && Date.now() < this.killSwitchUnlockTs) {
+            const remaining = ((this.killSwitchUnlockTs - Date.now()) / (60 * 60 * 1000)).toFixed(1);
+            console.warn(`[RISK] Kill switch active. Paused for another ${remaining} hours.`);
             return false;
         }
         

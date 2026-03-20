@@ -6,23 +6,43 @@ import axios from 'axios';
  * Carrega candles históricos do Binance ou cache local.
  */
 export async function loadHistoricalData(symbol, interval, startTime, endTime) {
-    // Garantir que a pasta de dados históricos existe
     const dataDir = path.join(process.cwd(), 'historical_data');
-    if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
+    if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
-    const filePath = path.join(dataDir, `${symbol}_${interval}.csv`);
-    
-    // Se existir arquivo local, poderíamos implementar leitura aqui (opcional)
-    // Para simplificar a versão pronta, vamos baixar da API
-    
+    // Caching logic: check if we have data for this symbol/interval
+    const cacheFile = path.join(dataDir, `${symbol}_${interval}_cache.json`);
+    let cachedData = [];
+    if (fs.existsSync(cacheFile)) {
+        try {
+            cachedData = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+            // Filter data within requested range
+            const filtered = cachedData.filter(c => c.ts >= startTime && c.ts <= endTime);
+            
+            // Check if we have complete data for the range
+            if (filtered.length > 0) {
+                const firstTs = filtered[0].ts;
+                const lastTs = filtered[filtered.length - 1].ts;
+                
+                // If the cached range covers the requested range (approx)
+                if (firstTs <= startTime && lastTs >= endTime - 60000) {
+                    console.log(`[Cache] Usando ${filtered.length} candles cacheados para ${symbol}.`);
+                    return filtered;
+                }
+            }
+        } catch (e) {
+            console.warn(`[Cache] Erro ao ler cache para ${symbol}, baixando novamente.`);
+        }
+    }
+
     const limit = 1000;
     const candles = [];
     let start = startTime;
+    const totalExpectedMins = Math.floor((endTime - startTime) / 60000);
     
-    console.log(`Baixando dados de ${symbol} em blocos de ${limit} (intervalo: 1m)...`);
+    console.log(`\n[Download] Iniciando download de ${symbol} (${totalExpectedMins} candles esperados)...`);
 
     while (start < endTime) {
-        const end = Math.min(endTime, start + limit * 60000); // 1000 candles de 1m
+        const end = Math.min(endTime, start + limit * 60000);
         try {
             const resp = await axios.get('https://fapi.binance.com/fapi/v1/klines', {
                 params: { 
@@ -31,7 +51,8 @@ export async function loadHistoricalData(symbol, interval, startTime, endTime) {
                     startTime: start, 
                     endTime: end, 
                     limit 
-                }
+                },
+                timeout: 10000 // 10s timeout
             });
 
             if (resp.data && resp.data.length > 0) {
@@ -45,14 +66,34 @@ export async function loadHistoricalData(symbol, interval, startTime, endTime) {
                         volume: parseFloat(c[5]) 
                     });
                 });
+                
+                const progress = (candles.length / totalExpectedMins * 100).toFixed(1);
+                process.stdout.write(`\r  > ${symbol}: ${candles.length}/${totalExpectedMins} (${progress}%) `);
+                
                 start = candles[candles.length - 1].ts + 60000;
+                
+                // Rate limit protection: 100ms delay between requests
+                await new Promise(resolve => setTimeout(resolve, 100));
             } else {
                 break;
             }
         } catch (error) {
-            console.error('Erro ao baixar candles (1m):', error.message);
+            console.error(`\n[Download ERROR] ${symbol}:`, error.message);
             break;
         }
     }
+
+    console.log(`\n[Download] Concluído: ${candles.length} candles obtidos para ${symbol}.`);
+
+    // Update Cache
+    if (candles.length > 0) {
+        const fullData = [...cachedData, ...candles];
+        // Remove duplicates and sort
+        const uniqueData = Array.from(new Map(fullData.map(c => [c.ts, c])).values())
+                                .sort((a, b) => a.ts - b.ts);
+        
+        fs.writeFileSync(cacheFile, JSON.stringify(uniqueData));
+    }
+
     return candles;
 }
