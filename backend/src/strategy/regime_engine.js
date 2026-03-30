@@ -25,13 +25,16 @@ export function calculateIndicators(candles, config = null) {
     const fastPeriod = config?.trendStrategy?.emaFast ?? 50;
     const slowPeriod = config?.trendStrategy?.emaSlow ?? 200;
     const volSmaPeriod = config?.trendStrategy?.volumeSma ?? 20;
+    const rsiPeriod = config?.trendStrategy?.rsiPeriod ?? 14;
+    const atrPeriod = config?.trendStrategy?.atrPeriod ?? 14;
+    const adxPeriod = config?.trendStrategy?.adxPeriod ?? 14;
 
     const emaFast = padArray(candles.length, EMA.calculate({ period: fastPeriod, values: closes }));
     const emaSlow = padArray(candles.length, EMA.calculate({ period: slowPeriod, values: closes }));
     const emaHTF = padArray(candles.length, EMA.calculate({ period: config?.trendStrategy?.emaHTF ?? 1000, values: closes }));
-    const rsi = padArray(candles.length, RSI.calculate({ period: 14, values: closes }));
-    const atr = padArray(candles.length, ATR.calculate({ period: 14, high: highs, low: lows, close: closes }));
-    const adxObj = padArray(candles.length, ADX.calculate({ period: 14, high: highs, low: lows, close: closes }));
+    const rsi = padArray(candles.length, RSI.calculate({ period: rsiPeriod, values: closes }));
+    const atr = padArray(candles.length, ATR.calculate({ period: atrPeriod, high: highs, low: lows, close: closes }));
+    const adxObj = padArray(candles.length, ADX.calculate({ period: adxPeriod, high: highs, low: lows, close: closes }));
     // Volume SMA
     const volSma = padArray(candles.length, SMA.calculate({ period: volSmaPeriod, values: volumes }));
     

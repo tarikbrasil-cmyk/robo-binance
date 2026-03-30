@@ -1,32 +1,36 @@
 {
   "general": {
-    "strategyName": "TrendFollowing_PRO_V3",
-    "cooldownMinutes": 120,
-    "maxTradesPerDay": 5,
-    "minEntryIntervalHours": 2,
+    "strategyName": "ModularStrategyV6_S1",
+    "cooldownMinutes": 60,
+    "maxTradesPerDay": 10,
+    "minEntryIntervalHours": 1,
     "maxSpreadPercent": 0.0005,
-    "maxDailyLoss": 0.03,
-    "maxDrawdownStop": 0.08,
-    "maxConcurrentTrades": 1,
-    "avoidTimeStartUTC": "23:30",
-    "avoidTimeEndUTC": "01:30"
+    "maxDailyLoss": 0.05,
+    "maxDrawdownStop": 0.15,
+    "maxConcurrentTrades": 2,
+    "avoidTimeStartUTC": "23:59",
+    "avoidTimeEndUTC": "00:01"
   },
   "trendStrategy": {
-    "emaFast": 50,
+    "emaFast": 20,
     "emaSlow": 200,
-    "volumeMultiplier": 1.2,
+    "rsiOversold": 45,
+    "rsiOverbought": 55,
+    "atrMultiplierSL": 3.5,
+    "atrMultiplierTP": 1.5,
     "leverage": 10,
-    "minSlope": 0.001
+    "useSessionFilter": true,
+    "session": "LONDON"
   },
   "risk": {
-    "maxAccountExposure": 0.10,
-    "maxRiskPerTrade": 0.005,
+    "maxAccountExposure": 0.20,
+    "maxRiskPerTrade": 0.02,
     "maxFundingRate": 0.0005,
-    "killSwitchLosses": 3,
-    "killSwitchPauseHours": 12
+    "killSwitchLosses": 5,
+    "killSwitchPauseHours": 6
   },
   "regime": {
-    "minVolatilityPercent": 0.002,
+    "minVolatilityPercent": 0.001,
     "trendAdxThreshold": 25,
     "rangingAdxThreshold": 20
   },

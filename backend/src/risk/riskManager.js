@@ -19,11 +19,11 @@ export class RiskManager {
         // ── STABILIZATION: Conservative risk limits ──
         this.MAX_DAILY_DRAWDOWN = 0.15; // 15% → stop bot
         this.MAX_CONSECUTIVE_LOSSES = 3;
-        this.MAX_EXPOSURE_PCT = 0.10; // 10% max account exposure
+        this.MAX_EXPOSURE_PCT = 0.20; // 20% max account exposure
         
-        this.DEFAULT_LEVERAGE = 5; // Reduced from 10
-        this.TP_PCT = 0.06;
-        this.SL_PCT = 0.03;
+        this.DEFAULT_LEVERAGE = 10; // Strategy #1 use 10x
+        this.TP_PCT = 0.10;
+        this.SL_PCT = 0.05;
         
         this.isKillSwitchActive = false;
         this.killSwitchUnlockTs = 0;

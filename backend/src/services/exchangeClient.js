@@ -22,21 +22,34 @@ if (IS_SPOT) {
     console.log('🟨 BOT_MODE: FUTURES — usando cliente binanceusdm (futuros)');
 }
 
+// Cache do último saldo válido para resiliência contra falhas de rede
+let lastKnownBalance = 0;
+
 /**
- * Helper unificado para buscar saldo
+ * Helper unificado para buscar saldo com retry e cache
  */
 export async function getUnifiedBalance() {
-    try {
-        const balanceInfo = await exchangeClient.fetchBalance();
-        if (IS_SPOT) {
-            return balanceInfo.free?.USDT || 0;
-        } else {
-            return balanceInfo.total?.USDT || 0;
+    const MAX_RETRIES = 3;
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+            const balanceInfo = await exchangeClient.fetchBalance();
+            const balance = IS_SPOT
+                ? (balanceInfo.free?.USDT || 0)
+                : (balanceInfo.total?.USDT || 0);
+            lastKnownBalance = balance; // cache on success
+            return balance;
+        } catch (e) {
+            if (attempt < MAX_RETRIES) {
+                const delay = 1000 * Math.pow(2, attempt - 1); // 1s, 2s
+                console.warn(`[BALANCE] Tentativa ${attempt}/${MAX_RETRIES} falhou: ${e.message}. Retry em ${delay}ms...`);
+                await new Promise(r => setTimeout(r, delay));
+            } else {
+                console.error(`[BALANCE] Todas as ${MAX_RETRIES} tentativas falharam: ${e.message}. Usando cache: $${lastKnownBalance}`);
+                return lastKnownBalance;
+            }
         }
-    } catch (e) {
-        console.error('Erro ao buscar saldo unificado:', e.message);
-        return 0;
     }
+    return lastKnownBalance;
 }
 
 export default exchangeClient;

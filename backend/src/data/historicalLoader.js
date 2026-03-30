@@ -47,7 +47,7 @@ export async function loadHistoricalData(symbol, interval, startTime, endTime) {
             const resp = await axios.get('https://fapi.binance.com/fapi/v1/klines', {
                 params: { 
                     symbol: symbol.toUpperCase(), 
-                    interval: '1m', 
+                    interval: interval, 
                     startTime: start, 
                     endTime: end, 
                     limit 
