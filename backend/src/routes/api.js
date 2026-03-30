@@ -1,7 +1,7 @@
 import express from 'express';
 import { riskManager } from '../risk/riskManager.js';
 import exchangeClient, { getUnifiedBalance, BOT_MODE } from '../services/exchangeClient.js';
-import { getDailyPnL, getHistory, getMetrics } from '../database/db.js';
+import { getDailyPnL, getDecisionJournal, getHistory, getMetrics } from '../database/db.js';
 import { activeTrades } from '../execution/tradeMonitor.js';
 import { broadcastMessage } from '../utils/websocket.js';
 import { Parser } from 'json2csv';
@@ -53,6 +53,15 @@ router.get('/metrics', async (req, res) => {
     res.json(metrics);
   } catch (error) {
     res.status(500).json({ error: 'Erro ao calcular métricas', details: error.message });
+  }
+});
+
+router.get('/decisions', async (req, res) => {
+  try {
+    const decisions = await getDecisionJournal(req.query);
+    res.json(decisions);
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao buscar trilha de auditoria', details: error.message });
   }
 });
 

@@ -18,6 +18,7 @@ function App() {
   const [prices, setPrices] = useState({});
   const [activePositions, setActivePositions] = useState([]);
   const [tradeHistory, setTradeHistory] = useState([]);
+    const [decisionTrail, setDecisionTrail] = useState([]);
   const [metrics, setMetrics] = useState({ totalTrades: 0, winCount: 0, avgRoe: 0, totalProfit: 0, maxDrawdownUsdt: 0 });
   const [logs, setLogs] = useState([{ time: new Date().toLocaleTimeString(), msg: 'Dashboard Inicializado', type: 'info' }]);
 
@@ -31,6 +32,7 @@ function App() {
     fetchInitialStatus();
     fetchHistory();
     fetchMetrics();
+    fetchDecisionTrail();
     
     const ws = new WebSocket(WS_URL);
     
@@ -42,10 +44,13 @@ function App() {
       } else if (payload.type === 'STATUS_UPDATE') {
         setBotStatus(!payload.data.isKillSwitchActive ? 'Operando' : 'Pausado');
         fetchInitialStatus();
+            } else if (payload.type === 'DECISION_EVENT') {
+                setDecisionTrail(prev => [payload.data, ...prev].slice(0, 100));
       } else if (payload.type === 'SYNC_UPDATE' || payload.type === 'TRADE_CLOSED' || payload.type === 'POSITION_OPENED') {
         fetchInitialStatus();
         fetchHistory();
         fetchMetrics();
+                fetchDecisionTrail();
         if (payload.type === 'TRADE_CLOSED') addLog(`Trade fechado: ${payload.data.symbol}`, 'success');
       }
     };
@@ -54,6 +59,7 @@ function App() {
         fetchInitialStatus();
         if (activeTab === 'history') fetchHistory();
         if (activeTab === 'analytics') fetchMetrics();
+        if (activeTab === 'audit') fetchDecisionTrail();
     }, 10000);
 
     return () => {
@@ -74,6 +80,14 @@ function App() {
       setActivePositions(data.activePositions || []);
     } catch (e) { console.error('API Error', e); }
   };
+
+    const fetchDecisionTrail = async () => {
+        try {
+            const res = await fetch(`${API_URL}/decisions?limit=100`);
+            const data = await res.json();
+            setDecisionTrail(data);
+        } catch (e) { console.error('Decision Journal Error', e); }
+    };
 
   const fetchHistory = async () => {
     try {
@@ -147,6 +161,7 @@ function App() {
         <NavItem active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<Activity size={20} />} label="Dashboard" />
         <NavItem active={activeTab === 'analytics'} onClick={() => setActiveTab('analytics')} icon={<BarChart2 size={20} />} label="Analytics" />
         <NavItem active={activeTab === 'history'} onClick={() => setActiveTab('history')} icon={<History size={20} />} label="Histórico" />
+        <NavItem active={activeTab === 'audit'} onClick={() => setActiveTab('audit')} icon={<ChevronRight size={20} />} label="Auditoria" />
         <NavItem active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} icon={<Settings size={20} />} label="Estratégia" />
         
         <div style={{ marginTop: 'auto', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px' }}>
@@ -187,6 +202,7 @@ function App() {
         {activeTab === 'dashboard' && <DashboardView pnl={pnl} riskData={riskData} prices={prices} activePositions={activePositions} logs={logs} config={config} />}
         {activeTab === 'analytics' && <AnalyticsView metrics={metrics} history={tradeHistory} />}
         {activeTab === 'history' && <HistoryView history={tradeHistory} onExport={exportData} />}
+        {activeTab === 'audit' && <AuditView decisions={decisionTrail} />}
         {activeTab === 'settings' && <SettingsView config={config} onSave={updateStrategy} />}
         
       </div>
@@ -379,6 +395,76 @@ function SettingsView({ config, onSave }) {
                 </button>
             </div>
         </div>
+    )
+}
+
+function AuditView({ decisions }) {
+    return (
+        <div className="glass-panel" style={{ padding: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <div>
+                    <h3 style={{ marginBottom: '0.35rem' }}>Decision Journal</h3>
+                    <div style={{ fontSize: '0.85rem', opacity: 0.6 }}>Sinais detectados, bloqueios por filtro/risco e execucoes confirmadas.</div>
+                </div>
+                <div style={{ fontSize: '0.8rem', opacity: 0.45 }}>{decisions.length} eventos</div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {decisions.map((entry) => (
+                    <div key={entry.id || `${entry.timestamp}-${entry.symbol}-${entry.event_type}`} style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1rem', background: 'rgba(255,255,255,0.02)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                                <DecisionBadge decision={entry.decision} />
+                                <span style={{ fontWeight: 700 }}>{entry.event_type}</span>
+                                {entry.symbol && <span style={{ opacity: 0.7 }}>{entry.symbol}</span>}
+                                {entry.side && <span style={{ opacity: 0.7 }}>{entry.side}</span>}
+                                {entry.strategy && <span style={{ opacity: 0.6 }}>{entry.strategy}</span>}
+                            </div>
+                            <span style={{ fontSize: '0.8rem', opacity: 0.45 }}>{new Date(entry.timestamp).toLocaleString()}</span>
+                        </div>
+
+                        <div style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>{entry.reason || 'Sem motivo detalhado.'}</div>
+
+                        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', fontSize: '0.8rem', opacity: 0.6 }}>
+                            <span>Origem: {entry.source}</span>
+                            <span>Modo: {entry.mode}</span>
+                            {typeof entry.price === 'number' && <span>Preco: {entry.price.toFixed(4)}</span>}
+                        </div>
+
+                        {entry.context && Object.keys(entry.context).length > 0 && (
+                            <pre style={{ marginTop: '0.75rem', padding: '0.75rem', borderRadius: '8px', background: 'rgba(0,0,0,0.25)', fontSize: '0.75rem', opacity: 0.75, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                                {JSON.stringify(entry.context, null, 2)}
+                            </pre>
+                        )}
+                    </div>
+                ))}
+
+                {decisions.length === 0 && (
+                    <div style={{ textAlign: 'center', padding: '2rem', opacity: 0.4 }}>
+                        Nenhum evento auditavel registrado ainda.
+                    </div>
+                )}
+            </div>
+        </div>
+    )
+}
+
+function DecisionBadge({ decision }) {
+    const palette = {
+        DETECTED: { color: '#60efff', background: 'rgba(96, 239, 255, 0.12)' },
+        BLOCKED: { color: '#ffb300', background: 'rgba(255, 179, 0, 0.12)' },
+        EXECUTED: { color: '#00ff87', background: 'rgba(0, 255, 135, 0.12)' },
+        CLOSED: { color: '#c084fc', background: 'rgba(192, 132, 252, 0.12)' },
+        FAILED: { color: '#ff4d4f', background: 'rgba(255, 77, 79, 0.12)' },
+        INFO: { color: '#ffffff', background: 'rgba(255,255,255,0.08)' },
+    };
+
+    const style = palette[decision] || palette.INFO;
+
+    return (
+        <span style={{ padding: '4px 8px', borderRadius: '999px', fontSize: '0.72rem', fontWeight: 700, color: style.color, background: style.background }}>
+            {decision}
+        </span>
     )
 }
 

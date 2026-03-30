@@ -1,6 +1,7 @@
 import exchange, { IS_SPOT, BOT_MODE } from '../services/exchangeClient.js';
 import { broadcastMessage } from '../utils/websocket.js';
 import { insertPnL } from '../database/db.js';
+import { recordDecision } from '../audit/decisionJournal.js';
 
 /**
  * Trade Monitor - Gerencia Posições Abertas e Atualiza Trailing Stop
@@ -118,6 +119,16 @@ export async function syncPositionsFromExchange(wss = null) {
                                 contracts: quantity,
                                 status: 'CLOSED'
                             });
+                            await recordDecision({
+                                source: 'TRADE_MONITOR',
+                                eventType: 'POSITION_CLOSED',
+                                decision: 'CLOSED',
+                                symbol,
+                                side: activeTrades[symbol].side,
+                                price: exitPrice,
+                                reason: 'Spot position closure detected during exchange sync',
+                                context: { profitUsdt, roePerc, quantity },
+                            }, { wss });
                             console.log(`[TRADE MONITOR] [SPOT] PnL Registrado: ${symbol} | Lucro: $${profitUsdt.toFixed(2)} (${roePerc.toFixed(2)}%)`);
                         }
 
@@ -155,6 +166,21 @@ export async function syncPositionsFromExchange(wss = null) {
                     contracts: trade.quantity,
                     status: 'CLOSED'
                 });
+
+                await recordDecision({
+                    source: 'TRADE_MONITOR',
+                    eventType: 'POSITION_CLOSED',
+                    decision: 'CLOSED',
+                    symbol,
+                    side: trade.side,
+                    strategy: trade.strategy,
+                    price: 0,
+                    reason: 'Futures position closure detected during exchange sync',
+                    context: {
+                        leverage: trade.leverage || 10,
+                        quantity: trade.quantity,
+                    },
+                }, { wss });
 
                 delete activeTrades[symbol];
                 if (wss) broadcastMessage(wss, 'SYNC_UPDATE', { symbol, action: 'closed' });
