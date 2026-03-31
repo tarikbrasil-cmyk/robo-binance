@@ -419,37 +419,196 @@ function HistoryView({ history, onExport }) {
 }
 
 function SettingsView({ config, onSave }) {
-    const [local, setLocal] = useState({ leverage: config.leverage, takeProfitPerc: config.takeProfitPerc * 100, stopLossPerc: config.stopLossPerc * 100 });
-    
+    const defaults = {
+        // Risk / Position
+        leverage: config.leverage ?? 10,
+        riskPerTrade: (config.riskPerTrade ?? 0.02) * 100,
+        // Symbol & Timeframe
+        symbol: config.symbol ?? 'ETHUSDT',
+        timeframe: config.timeframe ?? '5m',
+        // Engine Mode
+        useBreakout: config.useBreakout ?? false,
+        useMeanReversion: config.useMeanReversion ?? false,
+        // EMA Trend Alignment
+        emaFast: config.emaFast ?? 50,
+        emaSlow: config.emaSlow ?? 100,
+        emaHTF: config.emaHTF ?? 1000,
+        useEmaHTF: config.useEmaHTF ?? false,
+        // RSI
+        rsiPeriod: config.rsiPeriod ?? 14,
+        rsiOversold: config.rsiOversold ?? 35,
+        rsiOverbought: config.rsiOverbought ?? 65,
+        // ATR-based SL / TP
+        atrMultiplierSL: config.atrMultiplierSL ?? 3.5,
+        atrMultiplierTP: config.atrMultiplierTP ?? 1.5,
+        // Session Filter
+        useSessionFilter: config.useSessionFilter ?? true,
+        session: config.session ?? 'NY',
+        // Candle confirmation
+        useCandleConfirmation: config.useCandleConfirmation ?? true,
+    };
+    const [local, setLocal] = useState(defaults);
+    const set = (key, val) => setLocal(prev => ({ ...prev, [key]: val }));
+
+    const inputStyle = { background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', padding: '0.8rem', borderRadius: '8px', color: '#fff', width: '100%' };
+    const labelStyle = { fontSize: '0.85rem', opacity: 0.6, marginBottom: '6px', display: 'block' };
+    const sectionTitle = (text) => <h4 style={{ gridColumn: '1 / -1', marginTop: '0.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.06)', fontSize: '0.95rem', color: '#60efff' }}>{text}</h4>;
+
+    const handleSave = () => {
+        onSave({
+            leverage: parseInt(local.leverage),
+            riskPerTrade: local.riskPerTrade / 100,
+            symbol: local.symbol,
+            timeframe: local.timeframe,
+            useBreakout: local.useBreakout,
+            useMeanReversion: local.useMeanReversion,
+            emaFast: parseInt(local.emaFast),
+            emaSlow: parseInt(local.emaSlow),
+            emaHTF: parseInt(local.emaHTF),
+            useEmaHTF: local.useEmaHTF,
+            rsiPeriod: parseInt(local.rsiPeriod),
+            rsiOversold: parseInt(local.rsiOversold),
+            rsiOverbought: parseInt(local.rsiOverbought),
+            atrMultiplierSL: parseFloat(local.atrMultiplierSL),
+            atrMultiplierTP: parseFloat(local.atrMultiplierTP),
+            useSessionFilter: local.useSessionFilter,
+            session: local.session,
+            useCandleConfirmation: local.useCandleConfirmation,
+        });
+    };
+
+    // Derive active mode label
+    const modeLabel = local.useBreakout ? 'Breakout' : local.useMeanReversion ? 'Mean Reversion' : 'Pullback (RSI)';
+
     return (
-        <div className="glass-panel col-span-8" style={{ padding: '2rem', maxWidth: '600px' }}>
-            <h3 style={{ marginBottom: '2rem' }}>Ajustes Estratégicos</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <label style={{ fontSize: '0.9rem', opacity: 0.7 }}>Alavancagem Máxima (Futures)</label>
-                    <input type="number" value={local.leverage} onChange={e => setLocal({...local, leverage: e.target.value})} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', padding: '0.8rem', borderRadius: '8px', color: '#fff' }} />
+        <div className="glass-panel col-span-8" style={{ padding: '2rem', maxWidth: '820px' }}>
+            <h3 style={{ marginBottom: '0.5rem' }}>🛠️ Painel de Estratégia — ModularStrategyV6</h3>
+            <p style={{ fontSize: '0.85rem', opacity: 0.5, marginBottom: '1.5rem' }}>Configuração completa para backtests e operações live.</p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
+
+                {/* ── Symbol & Timeframe ── */}
+                {sectionTitle('Ativo e Timeframe')}
+                <div>
+                    <label style={labelStyle}>Símbolo</label>
+                    <select value={local.symbol} onChange={e => set('symbol', e.target.value)} style={inputStyle}>
+                        <option value="BTCUSDT">BTCUSDT</option>
+                        <option value="ETHUSDT">ETHUSDT</option>
+                        <option value="SOLUSDT">SOLUSDT</option>
+                        <option value="BNBUSDT">BNBUSDT</option>
+                    </select>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <label style={{ fontSize: '0.9rem', opacity: 0.7 }}>Take Profit Alvo (%)</label>
-                    <input type="number" value={local.takeProfitPerc} onChange={e => setLocal({...local, takeProfitPerc: e.target.value})} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', padding: '0.8rem', borderRadius: '8px', color: '#fff' }} />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <label style={{ fontSize: '0.9rem', opacity: 0.7 }}>Stop Loss Máximo (%)</label>
-                    <input type="number" value={local.stopLossPerc} onChange={e => setLocal({...local, stopLossPerc: e.target.value})} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', padding: '0.8rem', borderRadius: '8px', color: '#fff' }} />
-                </div>
-                
-                <div style={{ padding: '1rem', background: 'rgba(255, 179, 0, 0.05)', borderRadius: '8px', border: '1px solid rgba(255, 179, 0, 0.2)', display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    <AlertTriangle color="#ffb300" size={24} />
-                    <div style={{ fontSize: '0.85rem', color: '#ffb300' }}>Alterar parâmetros afetará apenas novas ordens. Posições abertas continuarão com os stops originais.</div>
+                <div>
+                    <label style={labelStyle}>Timeframe</label>
+                    <select value={local.timeframe} onChange={e => set('timeframe', e.target.value)} style={inputStyle}>
+                        <option value="1m">1m</option>
+                        <option value="3m">3m</option>
+                        <option value="5m">5m</option>
+                        <option value="15m">15m</option>
+                        <option value="30m">30m</option>
+                        <option value="1h">1h</option>
+                        <option value="4h">4h</option>
+                    </select>
                 </div>
 
-                <button 
-                  onClick={() => onSave({ leverage: parseInt(local.leverage), takeProfitPerc: local.takeProfitPerc/100, stopLossPerc: local.stopLossPerc/100 })}
-                  className="btn-primary" style={{ marginTop: '1rem', padding: '1rem', borderRadius: '12px', fontWeight: 700 }}
-                >
-                    Aplicar Configurações
-                </button>
+                {/* ── Engine Mode ── */}
+                {sectionTitle(`Modo de Operação — ${modeLabel}`)}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <input type="checkbox" id="chkBreakout" checked={local.useBreakout} onChange={e => set('useBreakout', e.target.checked)} />
+                    <label htmlFor="chkBreakout" style={{ fontSize: '0.9rem' }}>Breakout</label>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <input type="checkbox" id="chkMR" checked={local.useMeanReversion} onChange={e => set('useMeanReversion', e.target.checked)} />
+                    <label htmlFor="chkMR" style={{ fontSize: '0.9rem' }}>Mean Reversion</label>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <input type="checkbox" id="chkCandle" checked={local.useCandleConfirmation} onChange={e => set('useCandleConfirmation', e.target.checked)} />
+                    <label htmlFor="chkCandle" style={{ fontSize: '0.9rem' }}>Candle Confirmation</label>
+                </div>
+
+                {/* ── Multi-EMA Trend Alignment ── */}
+                {sectionTitle('Multi-EMA Trend Alignment')}
+                <div>
+                    <label style={labelStyle}>EMA Fast</label>
+                    <input type="number" value={local.emaFast} onChange={e => set('emaFast', e.target.value)} style={inputStyle} />
+                </div>
+                <div>
+                    <label style={labelStyle}>EMA Slow</label>
+                    <input type="number" value={local.emaSlow} onChange={e => set('emaSlow', e.target.value)} style={inputStyle} />
+                </div>
+                <div>
+                    <label style={labelStyle}>EMA HTF</label>
+                    <input type="number" value={local.emaHTF} onChange={e => set('emaHTF', e.target.value)} style={inputStyle} />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <input type="checkbox" id="chkHTF" checked={local.useEmaHTF} onChange={e => set('useEmaHTF', e.target.checked)} />
+                    <label htmlFor="chkHTF" style={{ fontSize: '0.9rem' }}>Usar EMA HTF Filter</label>
+                </div>
+
+                {/* ── RSI Settings ── */}
+                {sectionTitle('RSI (Pullback Filter)')}
+                <div>
+                    <label style={labelStyle}>RSI Período</label>
+                    <input type="number" value={local.rsiPeriod} onChange={e => set('rsiPeriod', e.target.value)} style={inputStyle} />
+                </div>
+                <div>
+                    <label style={labelStyle}>RSI Oversold</label>
+                    <input type="number" value={local.rsiOversold} onChange={e => set('rsiOversold', e.target.value)} style={inputStyle} />
+                </div>
+                <div>
+                    <label style={labelStyle}>RSI Overbought</label>
+                    <input type="number" value={local.rsiOverbought} onChange={e => set('rsiOverbought', e.target.value)} style={inputStyle} />
+                </div>
+
+                {/* ── ATR-based Risk (SL / TP) ── */}
+                {sectionTitle('Stop Loss / Take Profit (ATR Multiplier)')}
+                <div>
+                    <label style={labelStyle}>ATR × SL</label>
+                    <input type="number" step="0.1" value={local.atrMultiplierSL} onChange={e => set('atrMultiplierSL', e.target.value)} style={inputStyle} />
+                </div>
+                <div>
+                    <label style={labelStyle}>ATR × TP</label>
+                    <input type="number" step="0.1" value={local.atrMultiplierTP} onChange={e => set('atrMultiplierTP', e.target.value)} style={inputStyle} />
+                </div>
+
+                {/* ── Session Filter ── */}
+                {sectionTitle('Session Filter')}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <input type="checkbox" id="chkSession" checked={local.useSessionFilter} onChange={e => set('useSessionFilter', e.target.checked)} />
+                    <label htmlFor="chkSession" style={{ fontSize: '0.9rem' }}>Ativar Filtro de Sessão</label>
+                </div>
+                <div>
+                    <label style={labelStyle}>Sessão</label>
+                    <select value={local.session} onChange={e => set('session', e.target.value)} style={inputStyle}>
+                        <option value="NY">New York</option>
+                        <option value="LONDON">London</option>
+                        <option value="ASIA">Asia</option>
+                    </select>
+                </div>
+
+                {/* ── Position Sizing ── */}
+                {sectionTitle('Position Sizing')}
+                <div>
+                    <label style={labelStyle}>Alavancagem (Futures)</label>
+                    <input type="number" value={local.leverage} onChange={e => set('leverage', e.target.value)} style={inputStyle} />
+                </div>
+                <div>
+                    <label style={labelStyle}>Risco por Trade (%)</label>
+                    <input type="number" step="0.5" value={local.riskPerTrade} onChange={e => set('riskPerTrade', e.target.value)} style={inputStyle} />
+                </div>
             </div>
+
+            <div style={{ padding: '1rem', marginTop: '1.5rem', background: 'rgba(255, 179, 0, 0.05)', borderRadius: '8px', border: '1px solid rgba(255, 179, 0, 0.2)', display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <AlertTriangle color="#ffb300" size={24} />
+                <div style={{ fontSize: '0.85rem', color: '#ffb300' }}>Alterar parâmetros afetará apenas novas ordens. Posições abertas continuarão com os stops originais.</div>
+            </div>
+
+            <button 
+              onClick={handleSave}
+              className="btn-primary" style={{ marginTop: '1rem', padding: '1rem', borderRadius: '12px', fontWeight: 700, width: '100%' }}
+            >
+                Aplicar Configurações
+            </button>
         </div>
     )
 }
