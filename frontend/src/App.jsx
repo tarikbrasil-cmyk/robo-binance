@@ -72,6 +72,8 @@ function App() {
       }
     };
 
+    }
+
     const poll = setInterval(() => {
         fetchInitialStatus();
         if (activeTab === 'history') fetchHistory();
