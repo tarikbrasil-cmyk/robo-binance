@@ -1,11 +1,38 @@
-import { 
-    EMA, RSI, ATR, ADX, SMA, MACD, BollingerBands 
-} from 'technicalindicators';
-
 /**
  * Modular Strategy V6 (Optimization Engine Core)
  * Supports dynamic injection of parameters for grid search.
  */
+export function buildModularParamsFromConfig(config = {}) {
+    const trend = config.trendStrategy || {};
+
+    return {
+        rsiPeriod: trend.rsiPeriod ?? 14,
+        rsiOverbought: trend.rsiOverbought ?? 55,
+        rsiOversold: trend.rsiOversold ?? 45,
+        emaFastPeriod: trend.emaFast ?? 20,
+        emaSlowPeriod: trend.emaSlow ?? 200,
+        emaHTFPeriod: trend.emaHTF ?? 1000,
+        useEmaHTF: trend.useEmaHTF ?? false,
+        atrMultiplier: trend.atrMultiplierSL ?? 1.5,
+        tpMultiplier: trend.atrMultiplierTP ?? 3.0,
+        useCandleConfirmation: trend.useCandleConfirmation ?? true,
+        useMacd: trend.useMacd ?? false,
+        macdFast: trend.macdFast ?? 12,
+        macdSlow: trend.macdSlow ?? 26,
+        macdSignal: trend.macdSignal ?? 9,
+        useSessionFilter: trend.useSessionFilter ?? true,
+        session: trend.session ?? 'NY',
+        useBreakout: trend.useBreakout ?? false,
+        useMeanReversion: trend.useMeanReversion ?? false,
+    };
+}
+
+export function getModularStrategyName(params = {}) {
+    if (params.useBreakout) return 'MODULAR_V6_BREAKOUT';
+    if (params.useMeanReversion) return 'MODULAR_V6_MEAN_REVERSION';
+    return 'MODULAR_V6_PULLBACK';
+}
+
 export function evaluateModularStrategyV6(candles, indicators, index, optParams, symbol) {
     const idx = index;
     const candle = candles[idx];
@@ -86,18 +113,20 @@ export function evaluateModularStrategyV6(candles, indicators, index, optParams,
     // 7. ENTRY TRIGGERS
     
     // BUY
-    const isBreakoutBuy = useBreakout && candle.close > indicator.highestHigh20 && volumeOk;
+    const hasBreakoutLevels = indicator.highestHigh20 !== null && indicator.lowestLow20 !== null;
+    const hasBands = indicator.bb?.lower !== null && indicator.bb?.lower !== undefined && indicator.bb?.upper !== null && indicator.bb?.upper !== undefined;
+    const isBreakoutBuy = useBreakout && hasBreakoutLevels && candle.close > indicator.highestHigh20 && volumeOk;
     const isPullbackBuy = !useBreakout && !useMeanReversion && rsi <= rsiOversold + 10 && volumeOk && bullishConfirm;
-    const isMeanRevBuy = useMeanReversion && rsi < 30 && candle.low < indicator.bb.lower && bullishConfirm;
+    const isMeanRevBuy = useMeanReversion && hasBands && rsi < 30 && candle.low < indicator.bb.lower && bullishConfirm;
 
     if (isTrendUp && (isBreakoutBuy || isPullbackBuy || isMeanRevBuy) && macdBullish) {
         return buildSignalV6(symbol, 'BUY', candle.close, atr, optParams);
     }
 
     // SELL
-    const isBreakoutSell = useBreakout && candle.close < indicator.lowestLow20 && volumeOk;
+    const isBreakoutSell = useBreakout && hasBreakoutLevels && candle.close < indicator.lowestLow20 && volumeOk;
     const isPullbackSell = !useBreakout && !useMeanReversion && rsi >= rsiOverbought - 10 && volumeOk && bearishConfirm;
-    const isMeanRevSell = useMeanReversion && rsi > 70 && candle.high > indicator.bb.upper && bearishConfirm;
+    const isMeanRevSell = useMeanReversion && hasBands && rsi > 70 && candle.high > indicator.bb.upper && bearishConfirm;
 
     if (isTrendDown && (isBreakoutSell || isPullbackSell || isMeanRevSell) && macdBearish) {
         return buildSignalV6(symbol, 'SELL', candle.close, atr, optParams);
@@ -113,7 +142,7 @@ function buildSignalV6(symbol, signal, price, atr, optParams) {
     return {
         symbol,
         signal,
-        strategy: 'MODULAR_V6',
+        strategy: getModularStrategyName(optParams),
         entryPrice: price, 
         stopLossPrice: signal === 'BUY' ? price - slDist : price + slDist,
         takeProfitPrice: signal === 'BUY' ? price + tpDist : price - tpDist,

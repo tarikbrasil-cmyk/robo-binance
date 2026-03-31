@@ -1,10 +1,11 @@
 import express from 'express';
 import { riskManager } from '../risk/riskManager.js';
-import exchangeClient, { getUnifiedBalance, BOT_MODE } from '../services/exchangeClient.js';
+import exchangeClient, { getUnifiedBalance, BOT_MODE, IS_DEMO_TRADING } from '../services/exchangeClient.js';
 import { getDailyPnL, getDecisionJournal, getHistory, getMetrics } from '../database/db.js';
 import { activeTrades } from '../execution/tradeMonitor.js';
 import { broadcastMessage } from '../utils/websocket.js';
 import { Parser } from 'json2csv';
+import { runBacktestProgrammatic } from '../backtestRunner.js';
 
 const router = express.Router();
 
@@ -21,6 +22,7 @@ router.get('/status', async (req, res) => {
 
     res.json({
       mode: BOT_MODE,
+      isDemo: IS_DEMO_TRADING,
       config: riskManager.getRiskParams(),
       riskStatus: {
           isKillSwitchActive: riskManager.isKillSwitchActive,
@@ -109,6 +111,25 @@ router.put('/config', (req, res) => {
   if(stopLossPerc) riskManager.SL_PCT = stopLossPerc;
   
   res.json({ message: 'Configurações atualizadas', config: riskManager.getRiskParams() });
+});
+
+// POST Backtest — run a historical simulation via the HTTP API
+router.post('/backtest', async (req, res) => {
+  const { symbol, startDate, endDate, balance = 1000 } = req.body;
+  if (!symbol || !startDate || !endDate) {
+    return res.status(400).json({ error: 'symbol, startDate e endDate são obrigatórios' });
+  }
+  try {
+    const result = await runBacktestProgrammatic(
+      symbol.toUpperCase(),
+      startDate,
+      endDate,
+      parseFloat(balance)
+    );
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: 'Backtest falhou', details: error.message });
+  }
 });
 
 export default router;

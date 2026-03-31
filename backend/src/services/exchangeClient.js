@@ -9,6 +9,8 @@ const envMode = (process.env.BOT_MODE || 'FUTURES').trim().toUpperCase();
 export const BOT_MODE = envMode === 'SPOT' ? 'SPOT' : 'FUTURES';
 export const IS_SPOT = BOT_MODE === 'SPOT';
 export const IS_FUTURES = BOT_MODE === 'FUTURES';
+export const IS_DEMO_TRADING = process.env.BINANCE_TESTNET === 'true';
+export const ALLOW_LIVE_TRADING = process.env.ALLOW_LIVE_TRADING === 'true';
 
 let exchangeClient;
 

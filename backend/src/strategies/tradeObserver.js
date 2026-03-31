@@ -3,13 +3,10 @@ import { executeTradeSequence } from '../execution/orderRouter.js';
 import { recordDecision } from '../audit/decisionJournal.js';
 import { riskManager } from '../risk/riskManager.js';
 import { activeTrades, monitorActiveTrade } from '../execution/tradeMonitor.js';
-import { EMA, RSI, ATR, ADX } from 'technicalindicators';
-
-import { loadStrategyConfig } from '../strategy/regime_engine.js';
+import { calculateIndicators, loadStrategyConfig } from '../strategy/regime_engine.js';
+import { buildModularParamsFromConfig, evaluateModularStrategyV6 } from '../strategy/ModularStrategyV6.js';
 
 const MIN_KLINES = 250; 
-
-// Removed hardcoded constraints for Strategy #1
 
 export async function processMarketTick(symbol, currentPrice, wss) {
     if (!riskManager.canOpenNewPosition()) return;
@@ -22,73 +19,47 @@ export async function processMarketTick(symbol, currentPrice, wss) {
 
     try {
         const config = loadStrategyConfig();
-        const { emaFast, emaSlow, rsiOversold, rsiOverbought, atrMultiplierSL, atrMultiplierTP, session, useSessionFilter } = config.trendStrategy;
+        const executionTimeframe = config.trendStrategy?.timeframe || '5m';
+        const params = buildModularParamsFromConfig(config);
         
-        // 1. SESSION FILTER
-        if (useSessionFilter) {
-            const hour = new Date().getUTCHours();
-            const allowed = {
-                'ASIA': hour >= 0 && hour < 8,
-                'LONDON': hour >= 8 && hour < 16,
-                'NY': hour >= 13 && hour < 21
-            };
-            if (!allowed[session]) return;
-        }
-
-        const klines = await fetchRecentKlines(symbol, '5m', 250);
+        const klines = await fetchRecentKlines(symbol, executionTimeframe, MIN_KLINES);
         
         if (!klines || klines.length < MIN_KLINES) {
             return;
         }
 
-        const closes = klines.map(k => parseFloat(k[4]));
-        const highs = klines.map(k => parseFloat(k[2]));
-        const lows = klines.map(k => parseFloat(k[3]));
-        // const volumes = klines.map(k => parseFloat(k[5]));
+        const candles = klines.map((kline) => ({
+            ts: kline[0],
+            open: parseFloat(kline[1]),
+            high: parseFloat(kline[2]),
+            low: parseFloat(kline[3]),
+            close: parseFloat(kline[4]),
+            volume: parseFloat(kline[5]),
+        }));
+        const indicators = calculateIndicators(candles, config);
+        const signalIndex = candles.length - 2;
+        const indicator = indicators[signalIndex];
 
-        const emaF = EMA.calculate({ period: emaFast, values: closes });
-        const emaS = EMA.calculate({ period: emaSlow, values: closes });
-        const rsiArray = RSI.calculate({ period: 14, values: closes });
-        const atrArray = ATR.calculate({ high: highs, low: lows, close: closes, period: 14 });
-        const adxArray = ADX.calculate({ high: highs, low: lows, close: closes, period: 14 });
+        if (!indicator?.atr) return;
 
-        const currentEmaF = emaF[emaF.length - 1];
-        const currentEmaS = emaS[emaS.length - 1];
-        const currentRsi = rsiArray[rsiArray.length - 1];
-        const currentAtr = atrArray[atrArray.length - 1];
-        const currentAdx = adxArray[adxArray.length - 1]?.adx;
-
-        if (!currentEmaF || !currentEmaS || !currentRsi || !currentAtr) return;
-
-        const isTrendUp = currentEmaF > currentEmaS;
-        const isTrendDown = currentEmaF < currentEmaS;
-
+        const baseSignal = evaluateModularStrategyV6(candles, indicators, signalIndex, params, symbol);
         let signal = null;
 
-        if (isTrendUp && currentRsi <= rsiOversold) {
-            const sl = currentPrice - (currentAtr * atrMultiplierSL);
-            const tp = currentPrice + (currentAtr * atrMultiplierTP);
-
+        if (baseSignal) {
+            const atrDistance = indicator.atr * params.atrMultiplier;
+            const tpDistance = indicator.atr * params.tpMultiplier;
             signal = {
-                signal: 'BUY',
-                strategy: 'STRATEGY_#1_PB',
-                stopLossPrice: sl,
-                takeProfitPrice: tp,
-                indicator: { emaFast: currentEmaF, emaSlow: currentEmaS, rsi: currentRsi, atr: currentAtr, adx: currentAdx }
+                ...baseSignal,
+                entryPrice: currentPrice,
+                stopLossPrice: baseSignal.signal === 'BUY' ? currentPrice - atrDistance : currentPrice + atrDistance,
+                takeProfitPrice: baseSignal.signal === 'BUY' ? currentPrice + tpDistance : currentPrice - tpDistance,
+                indicator,
             };
-            console.log(`[STRATEGY#1] BUY signal for ${symbol} | EMA ${emaFast}/${emaSlow} alignment | RSI ${currentRsi.toFixed(1)}`);
-        } else if (isTrendDown && currentRsi >= rsiOverbought) {
-            const sl = currentPrice + (currentAtr * atrMultiplierSL);
-            const tp = currentPrice - (currentAtr * atrMultiplierTP);
 
-            signal = {
-                signal: 'SELL',
-                strategy: 'STRATEGY_#1_PB',
-                stopLossPrice: sl,
-                takeProfitPrice: tp,
-                indicator: { emaFast: currentEmaF, emaSlow: currentEmaS, rsi: currentRsi, atr: currentAtr, adx: currentAdx }
-            };
-            console.log(`[STRATEGY#1] SELL signal for ${symbol} | EMA ${emaFast}/${emaSlow} alignment | RSI ${currentRsi.toFixed(1)}`);
+            console.log(
+                `[${signal.strategy}] ${signal.signal} signal for ${symbol} @ ${executionTimeframe} | ` +
+                `EMA ${indicator.emaFast?.toFixed(2)}/${indicator.emaSlow?.toFixed(2)} | RSI ${indicator.rsi?.toFixed(1)}`
+            );
         }
 
         // ── Execute if signal found ──
@@ -101,13 +72,17 @@ export async function processMarketTick(symbol, currentPrice, wss) {
                 side: signal.signal,
                 strategy: signal.strategy,
                 price: currentPrice,
-                reason: 'Trend and RSI pullback conditions aligned',
+                reason: `${signal.strategy} conditions aligned on the last closed candle`,
                 context: {
-                    emaFast: currentEmaF,
-                    emaSlow: currentEmaS,
-                    rsi: currentRsi,
-                    atr: currentAtr,
-                    adx: currentAdx,
+                    timeframe: executionTimeframe,
+                    emaFast: indicator.emaFast,
+                    emaSlow: indicator.emaSlow,
+                    emaHTF: indicator.emaHTF,
+                    rsi: indicator.rsi,
+                    atr: indicator.atr,
+                    adx: indicator.adx,
+                    useBreakout: params.useBreakout,
+                    useMeanReversion: params.useMeanReversion,
                 },
             }, { wss });
 

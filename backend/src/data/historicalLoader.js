@@ -4,13 +4,24 @@ import axios from 'axios';
 
 /**
  * Carrega candles históricos do Binance ou cache local.
+ * @param {string} symbol   - Ex: "BTCUSDT"
+ * @param {string} interval - Ex: "1m", "5m", "15m"
+ * @param {number} startTime - ms epoch
+ * @param {number} endTime   - ms epoch
+ * @param {string} [mode]    - "FUTURES" (default) ou "SPOT"
  */
-export async function loadHistoricalData(symbol, interval, startTime, endTime) {
+export async function loadHistoricalData(symbol, interval, startTime, endTime, mode = 'FUTURES') {
+    const isSpot = mode.toUpperCase() === 'SPOT';
+    const klinesUrl = isSpot
+        ? 'https://api.binance.com/api/v3/klines'
+        : 'https://fapi.binance.com/fapi/v1/klines';
+
     const dataDir = path.join(process.cwd(), 'historical_data');
     if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
-    // Caching logic: check if we have data for this symbol/interval
-    const cacheFile = path.join(dataDir, `${symbol}_${interval}_cache.json`);
+    // SPOT candles use a separate cache file to avoid mixing data
+    const cacheSuffix = isSpot ? '_SPOT_cache.json' : '_cache.json';
+    const cacheFile = path.join(dataDir, `${symbol}_${interval}${cacheSuffix}`);
     let cachedData = [];
     if (fs.existsSync(cacheFile)) {
         try {
@@ -44,7 +55,7 @@ export async function loadHistoricalData(symbol, interval, startTime, endTime) {
     while (start < endTime) {
         const end = Math.min(endTime, start + limit * 60000);
         try {
-            const resp = await axios.get('https://fapi.binance.com/fapi/v1/klines', {
+            const resp = await axios.get(klinesUrl, {
                 params: { 
                     symbol: symbol.toUpperCase(), 
                     interval: interval, 

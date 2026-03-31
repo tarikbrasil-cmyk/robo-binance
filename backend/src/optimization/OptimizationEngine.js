@@ -1,6 +1,5 @@
 import { loadHistoricalData } from '../data/historicalLoader.js';
 import { calculateIndicators } from '../strategy/regime_engine.js';
-import { simulateTrade } from '../execution/simulator.js';
 import { evaluateModularStrategyV6 } from '../strategy/ModularStrategyV6.js';
 
 /**
@@ -67,12 +66,40 @@ export async function runOptimizationSearch(baseConfig, searchSpace) {
     return filtered.slice(0, 50); // Top 50 candidates
 }
 
+export function evaluateCandidateOnCandles(candles, params, baseConfig, symbol) {
+    const indicators = calculateIndicators(candles, {
+        ...baseConfig,
+        trendStrategy: {
+            ...(baseConfig?.trendStrategy || {}),
+            emaFast: params.emaFastPeriod,
+            emaSlow: params.emaSlowPeriod,
+            emaHTF: params.emaHTFPeriod,
+            rsiPeriod: params.rsiPeriod,
+            atrPeriod: params.atrPeriod || 14,
+            adxPeriod: params.adxPeriod || 14,
+        },
+    });
+
+    return runBacktestInternal(candles, indicators, baseConfig, params, symbol);
+}
+
 function runBacktestInternal(candles, indicators, config, optParams, symbol) {
     let balance = 1000;
     const trades = [];
     const initialBalance = balance;
+    let peakBalance = balance;
+    let maxDrawdown = 0;
+    const warmupCandles = Math.max(
+        100,
+        optParams.emaSlowPeriod || 0,
+        optParams.emaHTFPeriod || 0,
+        optParams.rsiPeriod || 0,
+        optParams.atrPeriod || 14,
+        optParams.adxPeriod || 14,
+        20
+    );
     
-    for (let i = 1000; i < candles.length; i++) {
+    for (let i = warmupCandles; i < candles.length; i++) {
         // Simple simulation loop
         const signal = evaluateModularStrategyV6(candles, indicators, i, optParams, symbol);
         
@@ -84,6 +111,10 @@ function runBacktestInternal(candles, indicators, config, optParams, symbol) {
                 const profit = balance * 0.02 * tradeResult.roe * 10; 
                 balance += profit;
                 trades.push({ ...tradeResult, pnl: profit });
+                peakBalance = Math.max(peakBalance, balance);
+                if (peakBalance > 0) {
+                    maxDrawdown = Math.max(maxDrawdown, (peakBalance - balance) / peakBalance);
+                }
                 i += tradeResult.candlesElapsed;
             }
         }
@@ -99,7 +130,8 @@ function runBacktestInternal(candles, indicators, config, optParams, symbol) {
             winRate: `${wr.toFixed(2)}%`,
             tradesCount: trades.length,
             profitFactor: calculatePF(trades),
-            totalPnl: balance - initialBalance
+            totalPnl: balance - initialBalance,
+            maxDrawdown,
         }
     };
 }

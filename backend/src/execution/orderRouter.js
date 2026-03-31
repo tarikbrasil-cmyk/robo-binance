@@ -1,4 +1,4 @@
-import exchange, { IS_SPOT, BOT_MODE, getUnifiedBalance } from '../services/exchangeClient.js';
+import exchange, { IS_SPOT, BOT_MODE, getUnifiedBalance, IS_DEMO_TRADING, ALLOW_LIVE_TRADING } from '../services/exchangeClient.js';
 import { insertLog } from '../database/db.js';
 import { recordDecision } from '../audit/decisionJournal.js';
 import { riskManager } from '../risk/riskManager.js';
@@ -48,6 +48,22 @@ function validateTradeData(symbol, side, currentPrice, strategyData) {
 }
 
 export async function executeTradeSequence(symbol, side, currentPrice, wss, strategyData = {}) {
+
+    if (!IS_SPOT && !IS_DEMO_TRADING && !ALLOW_LIVE_TRADING) {
+        const reason = 'Live trading is locked. Set ALLOW_LIVE_TRADING=true only after demo validation.';
+        console.warn(`[EXECUTION] ${reason}`);
+        await recordDecision({
+            source: 'ORDER_ROUTER',
+            eventType: 'LIVE_TRADING_LOCK',
+            decision: 'BLOCKED',
+            symbol,
+            side,
+            strategy: strategyData?.strategy,
+            price: currentPrice,
+            reason,
+        }, { wss });
+        return null;
+    }
 
     if (Date.now() < circuitBreakerUntil) {
         const remainingSec = Math.ceil((circuitBreakerUntil - Date.now()) / 1000);

@@ -1,6 +1,6 @@
 {
   "general": {
-    "strategyName": "ModularStrategyV6_S1",
+    "strategyName": "PROMOTED_ETHUSDT_5m",
     "cooldownMinutes": 60,
     "maxTradesPerDay": 10,
     "minEntryIntervalHours": 1,
@@ -9,21 +9,33 @@
     "maxDrawdownStop": 0.15,
     "maxConcurrentTrades": 2,
     "avoidTimeStartUTC": "23:59",
-    "avoidTimeEndUTC": "00:01"
+    "avoidTimeEndUTC": "00:01",
+    "lastPromotionSource": "optimization_top_results.json",
+    "lastPromotionAt": "2026-03-30T23:00:09.195Z"
   },
   "trendStrategy": {
-    "emaFast": 20,
-    "emaSlow": 200,
-    "rsiOversold": 45,
-    "rsiOverbought": 55,
-    "atrMultiplierSL": 3.5,
+    "timeframe": "5m",
+    "emaFast": 50,
+    "emaSlow": 100,
+    "emaHTF": 1000,
+    "rsiPeriod": 14,
+    "atrPeriod": 14,
+    "adxPeriod": 14,
+    "rsiOversold": 35,
+    "rsiOverbought": 65,
+    "useEmaHTF": false,
+    "atrMultiplierSL": 2.5,
     "atrMultiplierTP": 1.5,
+    "useCandleConfirmation": true,
+    "useBreakout": false,
+    "useMeanReversion": false,
+    "useMacd": false,
     "leverage": 10,
     "useSessionFilter": true,
-    "session": "LONDON"
+    "session": "NY"
   },
   "risk": {
-    "maxAccountExposure": 0.20,
+    "maxAccountExposure": 0.2,
     "maxRiskPerTrade": 0.02,
     "maxFundingRate": 0.0005,
     "killSwitchLosses": 5,

@@ -4,6 +4,7 @@ import { evaluateRegimeAdaptiveV5 } from '../strategy/RegimeAdaptive_V5.js';
 import { updateTrailingStop } from '../strategy/trend_strategy_pro.js';
 import { calculatePositionSize } from '../risk/position_sizing.js';
 import { detectMarketRegime, detectMarketStructure } from '../strategy/regime_engine.js';
+import { evaluateModularStrategyV6, buildModularParamsFromConfig } from '../strategy/ModularStrategyV6.js';
 
 export function simulateTrade(
     candle, balance, symbol, indicator, prevIndicator, config,
@@ -17,9 +18,14 @@ export function simulateTrade(
     
     // ── Choice of Strategy ────────────────────────────────────────────────
     let signalData = null;
-    const strategyName = config.activeStrategy || 'INSTITUTIONAL_ALPHA';
+    let modularParams = null;
+    // Support both config.general.strategyName (new) and config.activeStrategy (legacy)
+    const strategyName = config.general?.strategyName || config.activeStrategy || 'INSTITUTIONAL_ALPHA';
 
-    if (strategyName === 'V5' || strategyName === 'REGIME_ADAPTIVE_V5') {
+    if (strategyName.startsWith('MODULAR_V6') || strategyName.startsWith('PROMOTED_')) {
+        modularParams = buildModularParamsFromConfig(config);
+        signalData = evaluateModularStrategyV6(candles, indicators, currentIndex, modularParams, symbol);
+    } else if (strategyName === 'V5' || strategyName === 'REGIME_ADAPTIVE_V5') {
         signalData = evaluateRegimeAdaptiveV5(candles, indicators, currentIndex, config, symbol);
     } else if (strategyName === 'V3') {
         signalData = evaluateStrategyV3(candles, indicators, currentIndex, config, symbol);
@@ -34,7 +40,9 @@ export function simulateTrade(
     
     // Determine the actual ATR multiplier used for SL to ensure position sizing is accurate
     let stopMult = 1.5;
-    if (signalData.strategy.includes('V3')) {
+    if (modularParams) {
+        stopMult = modularParams.atrMultiplier;
+    } else if (signalData.strategy.includes('V3')) {
         stopMult = 2.0;
     } else if (signalData.strategy.includes('INSTITUTIONAL')) {
         stopMult = 3.0; // Matches buildInstitutionalSignal SL mult
@@ -42,7 +50,9 @@ export function simulateTrade(
         stopMult = 1.5; // Matches buildSignalV5 SL mult
     }
 
-    const riskPerTrade = signalData.strategy === 'REGIME_ADAPTIVE_V5' ? 0.003 : (config.risk?.risk_per_trade ?? 0.005);
+    const riskPerTrade = modularParams
+        ? (config.risk?.maxRiskPerTrade ?? 0.02)
+        : (signalData.strategy === 'REGIME_ADAPTIVE_V5' ? 0.003 : (config.risk?.risk_per_trade ?? 0.005));
 
     const riskData = calculatePositionSize({
         accountBalance:   balance,

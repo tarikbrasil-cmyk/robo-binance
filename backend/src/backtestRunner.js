@@ -65,14 +65,18 @@ async function startBacktestMenu() {
  * @returns {Object} { trades, finalBalance, debugLog, summary }
  */
 async function runBacktest(symbol, startTime, endTime, balance, overrideConfig = null) {
-    const candles = await loadHistoricalData(symbol, '1m', startTime, endTime);
+    const config     = overrideConfig ?? loadStrategyConfig();
+    // Use the timeframe declared in the active strategy (default 1m for legacy strategies)
+    const timeframe  = config.trendStrategy?.timeframe || '1m';
+    const mode       = (process.env.BOT_MODE || 'FUTURES').toUpperCase();
+
+    const candles = await loadHistoricalData(symbol, timeframe, startTime, endTime, mode);
     if (!candles || candles.length === 0) {
         console.error('[backtestRunner] Nenhum dado encontrado para o período selecionado.');
         return { trades: [], finalBalance: balance, debugLog: [], summary: null };
     }
-    console.log(`[backtestRunner] ${candles.length} candles carregados para ${symbol}.`);
+    console.log(`[backtestRunner] ${candles.length} candles carregados para ${symbol} @ ${timeframe} [${mode}].`);
 
-    const config     = overrideConfig ?? loadStrategyConfig();
     const indicators = calculateIndicators(candles, config);
 
     let trades          = [];
@@ -83,7 +87,8 @@ async function runBacktest(symbol, startTime, endTime, balance, overrideConfig =
     let currentDailyPnL = 0;
     let lastDay = null;
     let maxBalance = balance;
-    const startIdx = 200; // ensure EMA200 is warm
+    // Warmup: respect the slowest EMA in the config so indicators are fully primed
+    const startIdx = Math.max(200, config.trendStrategy?.emaSlow ?? 200);
 
     for (let i = startIdx; i < candles.length; i++) {
         const currentDay = new Date(candles[i].ts).getUTCDate();
