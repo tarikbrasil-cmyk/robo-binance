@@ -1,6 +1,6 @@
 {
   "general": {
-    "strategyName": "PROMOTED_ETHUSDT_5m",
+    "strategyName": "BENCHMARK_BTCUSDT_5m",
     "cooldownMinutes": 60,
     "maxTradesPerDay": 10,
     "minEntryIntervalHours": 1,
@@ -10,13 +10,15 @@
     "maxConcurrentTrades": 2,
     "avoidTimeStartUTC": "23:59",
     "avoidTimeEndUTC": "00:01",
-    "lastPromotionSource": "optimization_top_results.json",
-    "lastPromotionAt": "2026-03-30T23:00:09.195Z"
+    "lastPromotionSource": "benchmark_panel",
+    "lastPromotionAt": "2026-03-31T22:48:29.241Z",
+    "lastUpdatedAt": "2026-03-31T22:48:29.241Z",
+    "lastUpdatedSource": "benchmark_apply"
   },
   "trendStrategy": {
     "timeframe": "5m",
-    "emaFast": 50,
-    "emaSlow": 100,
+    "emaFast": 20,
+    "emaSlow": 200,
     "emaHTF": 1000,
     "rsiPeriod": 14,
     "atrPeriod": 14,
@@ -27,7 +29,7 @@
     "atrMultiplierSL": 2.5,
     "atrMultiplierTP": 1.5,
     "useCandleConfirmation": true,
-    "useBreakout": false,
+    "useBreakout": true,
     "useMeanReversion": false,
     "useMacd": false,
     "leverage": 10,
@@ -48,10 +50,6 @@
   },
   "allowedSymbols": [
     "BTC/USDT",
-    "BTC/USDT:USDT",
-    "ETH/USDT",
-    "ETH/USDT:USDT",
-    "SOL/USDT",
-    "SOL/USDT:USDT"
+    "BTC/USDT:USDT"
   ]
 }

@@ -625,9 +625,15 @@ function BenchmarkView() {
     const [selectedSymbols, setSelSymbols] = useState(['BTCUSDT', 'ETHUSDT']);
     const [selectedTFs, setSelTFs]         = useState(['5m', '15m', '1h']);
     const [activeRegimeTab, setActiveRegimeTab] = useState('ALL');
+    const [applying, setApplying]   = useState(null);   // index of row being applied
+    const [appliedMsg, setAppliedMsg] = useState(null);  // success message
 
     useEffect(() => {
         fetch(`${API_URL}/benchmark/config`).then(r => r.json()).then(setBmConfig).catch(() => {});
+        // Load last persisted results so they survive page changes
+        fetch(`${API_URL}/benchmark/results`).then(r => r.json()).then(data => {
+            if (data && data.top50) setReport(data);
+        }).catch(() => {});
     }, []);
 
     const toggleItem = (arr, setArr, item) => {
@@ -647,6 +653,21 @@ function BenchmarkView() {
             setReport(data);
         } catch (e) { setError(e.message); }
         finally { setRunning(false); }
+    };
+
+    const applyStrategy = async (result, rowIndex) => {
+        setApplying(rowIndex); setAppliedMsg(null);
+        try {
+            const res = await fetch(`${API_URL}/benchmark/apply`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ params: result.params, symbol: result.symbol, timeframe: result.timeframe }),
+            });
+            if (!res.ok) { const e = await res.json(); throw new Error(e.details || e.error); }
+            setAppliedMsg(`✅ Applied: ${result.strategy} (${result.symbol} ${result.timeframe}) → Demo Bot`);
+            setTimeout(() => setAppliedMsg(null), 6000);
+        } catch (e) { setError(`Apply failed: ${e.message}`); }
+        finally { setApplying(null); }
     };
 
     const chipStyle = (active) => ({
@@ -710,6 +731,7 @@ function BenchmarkView() {
                 </button>
 
                 {error && <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'rgba(255,77,79,0.1)', border: '1px solid rgba(255,77,79,0.3)', borderRadius: '8px', color: '#ff4d4f', fontSize: '0.9rem' }}>❌ {error}</div>}
+                {appliedMsg && <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'rgba(0,255,135,0.1)', border: '1px solid rgba(0,255,135,0.3)', borderRadius: '8px', color: '#00ff87', fontSize: '0.9rem' }}>{appliedMsg}</div>}
             </div>
 
             {/* Summary stats */}
@@ -745,7 +767,7 @@ function BenchmarkView() {
                         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.82rem' }}>
                             <thead>
                                 <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', opacity: 0.55 }}>
-                                    {['#', 'Regime', 'Symbol', 'TF', 'Strategy', 'Win Rate', 'PF', 'Trades', 'Max DD', 'PnL', 'Score', 'EMA', 'RSI', 'ATR SL/TP', 'Session'].map(h => (
+                                    {['#', 'Regime', 'Symbol', 'TF', 'Strategy', 'Win Rate', 'PF', 'Trades', 'Max DD', 'PnL', 'Score', 'EMA', 'RSI', 'ATR SL/TP', 'Session', ''].map(h => (
                                         <th key={h} style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>{h}</th>
                                     ))}
                                 </tr>
@@ -770,6 +792,14 @@ function BenchmarkView() {
                                         <td style={{ padding: '6px 10px', fontSize: '0.78rem' }}>{r.params.rsiOversold}/{r.params.rsiOverbought}</td>
                                         <td style={{ padding: '6px 10px', fontSize: '0.78rem' }}>{r.params.atrMultiplier}×/{r.params.tpMultiplier}×</td>
                                         <td style={{ padding: '6px 10px', fontSize: '0.78rem' }}>{r.params.session}</td>
+                                        <td style={{ padding: '6px 10px' }}>
+                                            <button onClick={() => applyStrategy(r, i)} disabled={applying === i}
+                                                style={{ padding: '4px 12px', borderRadius: '6px', border: '1px solid rgba(0,255,135,0.4)',
+                                                    background: applying === i ? 'rgba(0,255,135,0.15)' : 'rgba(0,255,135,0.08)',
+                                                    color: '#00ff87', fontSize: '0.75rem', fontWeight: 700, cursor: applying === i ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}>
+                                                {applying === i ? '⏳...' : '▶ Apply'}
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>

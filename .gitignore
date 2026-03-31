@@ -26,3 +26,4 @@ backend/historical_data/*_cache.json
 # Optimization outputs
 backend/optimization_*.txt
 backend/optimization_*.json
+benchmark_cache/
