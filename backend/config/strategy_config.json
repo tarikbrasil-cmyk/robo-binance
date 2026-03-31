@@ -1,24 +1,45 @@
 {
   "general": {
-    "strategyName": "TrendFollowing_PRO_V2",
-    "cooldownMinutes": 30,
+    "strategyName": "PROMOTED_ETHUSDT_5m",
+    "cooldownMinutes": 60,
+    "maxTradesPerDay": 10,
+    "minEntryIntervalHours": 1,
     "maxSpreadPercent": 0.0005,
-    "maxDailyLoss": 0.03,
-    "maxDrawdownStop": 0.10,
-    "maxConcurrentTrades": 1,
-    "avoidTimeStartUTC": "23:30",
-    "avoidTimeEndUTC": "01:30"
+    "maxDailyLoss": 0.05,
+    "maxDrawdownStop": 0.15,
+    "maxConcurrentTrades": 2,
+    "avoidTimeStartUTC": "23:59",
+    "avoidTimeEndUTC": "00:01",
+    "lastPromotionSource": "optimization_top_results.json",
+    "lastPromotionAt": "2026-03-30T23:00:09.195Z"
   },
   "trendStrategy": {
+    "timeframe": "5m",
     "emaFast": 50,
-    "emaSlow": 200,
-    "volumeMultiplier": 1.1,
-    "leverage": 10
+    "emaSlow": 100,
+    "emaHTF": 1000,
+    "rsiPeriod": 14,
+    "atrPeriod": 14,
+    "adxPeriod": 14,
+    "rsiOversold": 35,
+    "rsiOverbought": 65,
+    "useEmaHTF": false,
+    "atrMultiplierSL": 2.5,
+    "atrMultiplierTP": 1.5,
+    "useCandleConfirmation": true,
+    "useBreakout": false,
+    "useMeanReversion": false,
+    "useMacd": false,
+    "leverage": 10,
+    "useSessionFilter": true,
+    "session": "NY"
   },
   "risk": {
-    "maxAccountExposure": 0.10,
-    "maxRiskPerTrade": 0.005,
-    "maxFundingRate": 0.0005
+    "maxAccountExposure": 0.2,
+    "maxRiskPerTrade": 0.02,
+    "maxFundingRate": 0.0005,
+    "killSwitchLosses": 5,
+    "killSwitchPauseHours": 6
   },
   "regime": {
     "minVolatilityPercent": 0.001,

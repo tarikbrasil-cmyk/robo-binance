@@ -1,5 +1,7 @@
-import exchange, { IS_SPOT, BOT_MODE } from '../services/exchangeClient.js';
+import exchange, { IS_SPOT, BOT_MODE, getUnifiedBalance, IS_DEMO_TRADING, ALLOW_LIVE_TRADING } from '../services/exchangeClient.js';
 import { insertLog } from '../database/db.js';
+import { recordDecision } from '../audit/decisionJournal.js';
+import { riskManager } from '../risk/riskManager.js';
 import { broadcastMessage } from '../utils/websocket.js';
 import { calculatePositionSize } from '../risk/position_sizing.js';
 import { activeTrades } from './tradeMonitor.js';
@@ -25,6 +27,20 @@ function validateTradeData(symbol, side, currentPrice, strategyData) {
         const reason = errors.join(', ');
         console.error(`[VALIDATION] Trade rejected for ${symbol} ${side}: ${reason}`);
         insertLog('VALIDATION_REJECTED', `[${symbol}] ${side} rejected: ${reason}`);
+        recordDecision({
+            source: 'ORDER_ROUTER',
+            eventType: 'VALIDATION_REJECTED',
+            decision: 'BLOCKED',
+            symbol,
+            side,
+            strategy: strategyData?.strategy,
+            price: currentPrice,
+            reason,
+            context: {
+                stopLossPrice: strategyData?.stopLossPrice,
+                takeProfitPrice: strategyData?.takeProfitPrice,
+            },
+        });
         return false;
     }
 
@@ -33,9 +49,35 @@ function validateTradeData(symbol, side, currentPrice, strategyData) {
 
 export async function executeTradeSequence(symbol, side, currentPrice, wss, strategyData = {}) {
 
+    if (!IS_SPOT && !IS_DEMO_TRADING && !ALLOW_LIVE_TRADING) {
+        const reason = 'Live trading is locked. Set ALLOW_LIVE_TRADING=true only after demo validation.';
+        console.warn(`[EXECUTION] ${reason}`);
+        await recordDecision({
+            source: 'ORDER_ROUTER',
+            eventType: 'LIVE_TRADING_LOCK',
+            decision: 'BLOCKED',
+            symbol,
+            side,
+            strategy: strategyData?.strategy,
+            price: currentPrice,
+            reason,
+        }, { wss });
+        return null;
+    }
+
     if (Date.now() < circuitBreakerUntil) {
         const remainingSec = Math.ceil((circuitBreakerUntil - Date.now()) / 1000);
         console.warn(`[FAIL-SAFE] Circuit Breaker active (${remainingSec}s)`);
+        await recordDecision({
+            source: 'ORDER_ROUTER',
+            eventType: 'CIRCUIT_BREAKER_BLOCK',
+            decision: 'BLOCKED',
+            symbol,
+            side,
+            strategy: strategyData?.strategy,
+            price: currentPrice,
+            reason: `Circuit breaker active for ${remainingSec}s`,
+        }, { wss });
         return null;
     }
 
@@ -43,20 +85,55 @@ export async function executeTradeSequence(symbol, side, currentPrice, wss, stra
 
     if (activeTrades[symbol]) {
         console.log(`[EXECUTION] Active position exists for ${symbol}`);
+        await recordDecision({
+            source: 'ORDER_ROUTER',
+            eventType: 'ACTIVE_POSITION_BLOCK',
+            decision: 'BLOCKED',
+            symbol,
+            side,
+            strategy: strategyData?.strategy,
+            price: currentPrice,
+            reason: 'Symbol already has an active position',
+        }, { wss });
         return null;
     }
 
     if (IS_SPOT && side === 'SELL') {
         console.log(`[EXECUTION] SPOT ignores SELL`);
+        await recordDecision({
+            source: 'ORDER_ROUTER',
+            eventType: 'SPOT_SIDE_BLOCK',
+            decision: 'BLOCKED',
+            symbol,
+            side,
+            strategy: strategyData?.strategy,
+            price: currentPrice,
+            reason: 'Spot mode does not open SELL positions',
+        }, { wss });
         return null;
     }
 
     try {
+        const config = loadStrategyConfig();
+        const availableBalance = await getUnifiedBalance();
+        const currentExposureUSDT = riskManager.totalOpenExposure;
+
         // ── Funding Rate Filter ──
         const fundingInfo = await exchange.fetchFundingRate(symbol);
         const fundingThreshold = config.risk?.maxFundingRate || 0.05; // 0.05%
         if (Math.abs(fundingInfo.fundingRate) > fundingThreshold) {
              insertLog('FUNDING_REJECTED', `[${symbol}] rate=${fundingInfo.fundingRate}`);
+               await recordDecision({
+                 source: 'ORDER_ROUTER',
+                 eventType: 'FUNDING_REJECTED',
+                 decision: 'BLOCKED',
+                 symbol,
+                 side,
+                 strategy: strategyData?.strategy,
+                 price: currentPrice,
+                 reason: `Funding rate ${fundingInfo.fundingRate} exceeded threshold ${fundingThreshold}`,
+                 context: { fundingRate: fundingInfo.fundingRate, fundingThreshold },
+               }, { wss });
              return null;
         }
 
@@ -64,7 +141,7 @@ export async function executeTradeSequence(symbol, side, currentPrice, wss, stra
             accountBalance: availableBalance,
             entryPrice: currentPrice,
             atr: strategyData.indicator.atr,
-            stopATRMultiplier: strategyData.strategy === 'TREND_V2' ? 1.5 : 1.0,
+            stopATRMultiplier: config.trendStrategy?.atrMultiplierSL || 1.5,
             maxRiskPerTrade: config.risk?.maxRiskPerTrade || 0.005,
             currentExposureUSDT,
             maxExposureLimit: config.risk?.maxAccountExposure || 0.10,
@@ -73,6 +150,20 @@ export async function executeTradeSequence(symbol, side, currentPrice, wss, stra
 
         if (positionalData.positionSizeUSDT <= 0) {
             insertLog('SIZING_REJECTED', `[${symbol}] ${positionalData.reason}`);
+            await recordDecision({
+                source: 'ORDER_ROUTER',
+                eventType: 'SIZING_REJECTED',
+                decision: 'BLOCKED',
+                symbol,
+                side,
+                strategy: strategyData?.strategy,
+                price: currentPrice,
+                reason: positionalData.reason,
+                context: {
+                    accountBalance: availableBalance,
+                    currentExposureUSDT,
+                },
+            }, { wss });
             return null;
         }
 
@@ -152,6 +243,25 @@ export async function executeTradeSequence(symbol, side, currentPrice, wss, stra
             mode: BOT_MODE
         };
 
+        await recordDecision({
+            source: 'ORDER_ROUTER',
+            eventType: 'POSITION_OPENED',
+            decision: 'EXECUTED',
+            symbol,
+            side,
+            strategy: strategyData?.strategy,
+            price: entryPrice,
+            reason: 'Market entry executed successfully',
+            context: {
+                quantity,
+                leverage,
+                stopLossPrice: slPriceF,
+                takeProfitPrice: tpFinalF,
+                tp1Price: tp1PriceF,
+                mode: BOT_MODE,
+            },
+        }, { wss });
+
         if (wss) broadcastMessage(wss, 'POSITION_OPENED', activePosition);
 
         return activePosition;
@@ -159,6 +269,18 @@ export async function executeTradeSequence(symbol, side, currentPrice, wss, stra
     } catch (error) {
         executionFailures++;
         insertLog('CRITICAL_ERROR', error.message);
+
+        await recordDecision({
+            source: 'ORDER_ROUTER',
+            eventType: 'EXECUTION_ERROR',
+            decision: 'FAILED',
+            symbol,
+            side,
+            strategy: strategyData?.strategy,
+            price: currentPrice,
+            reason: error.message,
+            context: { executionFailures },
+        }, { wss });
 
         if (executionFailures >= 3) {
             circuitBreakerUntil = Date.now() + 300000;

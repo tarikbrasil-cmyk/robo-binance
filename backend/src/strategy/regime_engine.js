@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { EMA, RSI, ATR, ADX, SMA } from 'technicalindicators';
+import { EMA, RSI, ATR, ADX, SMA, BollingerBands } from 'technicalindicators';
 
 export function loadStrategyConfig() {
     const configPath = path.join(process.cwd(), 'config', 'strategy_config.json');
@@ -25,14 +25,21 @@ export function calculateIndicators(candles, config = null) {
     const fastPeriod = config?.trendStrategy?.emaFast ?? 50;
     const slowPeriod = config?.trendStrategy?.emaSlow ?? 200;
     const volSmaPeriod = config?.trendStrategy?.volumeSma ?? 20;
+    const rsiPeriod = config?.trendStrategy?.rsiPeriod ?? 14;
+    const atrPeriod = config?.trendStrategy?.atrPeriod ?? 14;
+    const adxPeriod = config?.trendStrategy?.adxPeriod ?? 14;
 
     const emaFast = padArray(candles.length, EMA.calculate({ period: fastPeriod, values: closes }));
     const emaSlow = padArray(candles.length, EMA.calculate({ period: slowPeriod, values: closes }));
-    const rsi = padArray(candles.length, RSI.calculate({ period: 14, values: closes }));
-    const atr = padArray(candles.length, ATR.calculate({ period: 14, high: highs, low: lows, close: closes }));
-    const adxObj = padArray(candles.length, ADX.calculate({ period: 14, high: highs, low: lows, close: closes }));
+    const emaHTF = padArray(candles.length, EMA.calculate({ period: config?.trendStrategy?.emaHTF ?? 1000, values: closes }));
+    const rsi = padArray(candles.length, RSI.calculate({ period: rsiPeriod, values: closes }));
+    const atr = padArray(candles.length, ATR.calculate({ period: atrPeriod, high: highs, low: lows, close: closes }));
+    const adxObj = padArray(candles.length, ADX.calculate({ period: adxPeriod, high: highs, low: lows, close: closes }));
     // Volume SMA
     const volSma = padArray(candles.length, SMA.calculate({ period: volSmaPeriod, values: volumes }));
+    
+    // Bollinger Bands (20, 2)
+    const bb = padArray(candles.length, BollingerBands.calculate({ period: 20, stdDev: 2, values: closes }));
     
     // filter nulls to safely pass array into another SMA
     const validAtr = atr.filter(a => a !== null);
@@ -109,6 +116,7 @@ export function calculateIndicators(candles, config = null) {
             ts: candles[i].ts, // Added for cooldown/backtest consistency
             emaFast: emaFast[i],
             emaSlow: emaSlow[i],
+            emaHTF: emaHTF[i],
             emaFastSlope,
             rsi: rsi[i],
             atr: currentAtr,
@@ -122,7 +130,8 @@ export function calculateIndicators(candles, config = null) {
             atrSma100: atrSma100[i],
             volume: volumes[i],
             highestHigh20: highs20[i],
-            lowestLow20: lows20[i]
+            lowestLow20: lows20[i],
+            bb: bb[i] // { upper, middle, lower }
         });
     }
     
@@ -131,10 +140,10 @@ export function calculateIndicators(candles, config = null) {
 
 export function detectMarketRegime(indicator, config) {
     if (!indicator || 
-        indicator.adx === null || 
-        indicator.emaFast === null || 
-        indicator.emaSlow === null || 
-        indicator.atr === null) {
+        indicator.adx === undefined || indicator.adx === null || 
+        indicator.emaFast === undefined || indicator.emaFast === null || 
+        indicator.emaSlow === undefined || indicator.emaSlow === null || 
+        indicator.atr === undefined || indicator.atr === null) {
         return 'NEUTRAL';
     }
     
@@ -157,6 +166,33 @@ export function detectMarketRegime(indicator, config) {
         return 'RANGE';
     }
     
+    return 'NEUTRAL';
+}
+
+/**
+ * V5 Regime Classification
+ * TRENDING: ADX > 25
+ * SIDEWAYS: ADX < 20
+ * VOLATILE: ATR > 2x ATR SMA 50
+ */
+export function classifyRegimeV5(indicator) {
+    if (!indicator || indicator.adx === null || indicator.atr === null || indicator.atrSma50 === null) return 'NEUTRAL';
+    
+    // 1. VOLATILE / CHAOTIC (Highest priority)
+    if (indicator.atr > indicator.atrSma50 * 2.0) {
+        return 'VOLATILE';
+    }
+
+    // 2. TRENDING
+    if (indicator.adx > 25) {
+        return 'TRENDING';
+    }
+
+    // 3. SIDEWAYS
+    if (indicator.adx < 20) {
+        return 'SIDEWAYS';
+    }
+
     return 'NEUTRAL';
 }
 
@@ -217,4 +253,58 @@ export function isMarketConditionAllowed(indicator, candle, config) {
     }
     
     return true;
+}
+
+/**
+ * Detects Market Structure (HH, HL, LH, LL)
+ */
+export function detectMarketStructure(candles, index, window = 20) {
+    if (index < window * 2) return 'NEUTRAL';
+
+    const prices = candles.slice(index - (window * 2) + 1, index + 1);
+    const highs = prices.map(c => c.high);
+    const lows = prices.map(c => c.low);
+
+    // Simplistic Peak/Valley detection
+    const findPeaks = (arr) => {
+        let peaks = [];
+        for (let i = 1; i < arr.length - 1; i++) {
+            if (arr[i] > arr[i - 1] && arr[i] > arr[i + 1]) peaks.push(arr[i]);
+        }
+        return peaks;
+    };
+    
+    const findValleys = (arr) => {
+        let valleys = [];
+        for (let i = 1; i < arr.length - 1; i++) {
+            if (arr[i] < arr[i - 1] && arr[i] < arr[i + 1]) valleys.push(arr[i]);
+        }
+        return valleys;
+    };
+
+    const peaks = findPeaks(highs).slice(-2);
+    const valleys = findValleys(lows).slice(-2);
+
+    if (peaks.length < 2 || valleys.length < 2) return 'NEUTRAL';
+
+    const [prevPeak, currPeak] = peaks;
+    const [prevValley, currValley] = valleys;
+
+    if (currPeak > prevPeak && currValley > prevValley) return 'BULLISH_STRUCTURE'; // HH + HL
+    if (currPeak < prevPeak && currValley < prevValley) return 'BEARISH_STRUCTURE'; // LH + LL
+
+    return 'CHOPPY';
+}
+
+/**
+ * Calculates the slope of a series over a window
+ */
+export function getEmaSlope(indicators, index, window = 10) {
+    if (!indicators || index < window) return 0;
+    
+    const first = indicators[index - window].emaFast;
+    const last = indicators[index].emaFast;
+    
+    if (first === null || last === null || first === 0) return 0;
+    return (last - first) / first; // % change over window
 }

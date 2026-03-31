@@ -34,11 +34,11 @@ export async function runAutomaticBenchmark(initialBalance = 1000) {
 
     for (let pIdx = 0; pIdx < benchmarkPeriods.length; pIdx++) {
         const period = benchmarkPeriods[pIdx];
-        console.log(`\n[Period ${pIdx + 1}/${benchmarkPeriods.length}] ${period.name}: ${period.start} -> ${period.end}`);
+        console.log(`\n\x1b[35m[Period ${pIdx + 1}/${benchmarkPeriods.length}] ${period.name}: ${period.start} -> ${period.end}\x1b[0m`);
 
         for (let sIdx = 0; sIdx < benchmarkSymbols.length; sIdx++) {
             const symbol = benchmarkSymbols[sIdx];
-            console.log(`  (${sIdx + 1}/${benchmarkSymbols.length}) Rodando: ${symbol}...`);
+            console.log(`\n  \x1b[36m(${sIdx + 1}/${benchmarkSymbols.length}) Processando: ${symbol}...\x1b[0m`);
 
             try {
                 // Transparency Mode: Override drawdown stop for benchmark to see full performance
@@ -49,6 +49,8 @@ export async function runAutomaticBenchmark(initialBalance = 1000) {
                 
                 if (result && result.summary) {
                     const pnlPercent = ((result.finalBalance - initialBalance) / initialBalance * 100).toFixed(2) + '%';
+                    const color = parseFloat(pnlPercent) >= 0 ? '\x1b[32m' : '\x1b[31m';
+                    console.log(`  \x1b[32m[OK]\x1b[0m ${symbol} finalizado. PnL: ${color}${pnlPercent}\x1b[0m | Trades: ${result.summary.trades}`);
                     
                     benchmarkResults.push({
                         symbol,
@@ -66,10 +68,26 @@ export async function runAutomaticBenchmark(initialBalance = 1000) {
                         strategyId: snapshotId
                     });
                 } else {
-                    console.warn(`  [!] Sem resultados para ${symbol} no ${period.name}`);
+                    console.warn(`  \x1b[33m[!] Sem trades para ${symbol} no ${period.name}\x1b[0m`);
+                    // Even if no trades, we still track it with 0 values
+                    benchmarkResults.push({
+                        symbol,
+                        periodName: period.name,
+                        startDate: period.start,
+                        endDate: period.end,
+                        trades: 0,
+                        winRate: '0%',
+                        profitFactor: '0',
+                        expectancy: '0',
+                        sharpeRatio: '0',
+                        finalBalance: initialBalance + ' USDT',
+                        pnlPercent: '0.00%',
+                        maxDrawdown: '0.00%',
+                        strategyId: snapshotId
+                    });
                 }
             } catch (error) {
-                console.error(`  [ERROR] Falha no backtest ${symbol}/${period.name}:`, error.message);
+                console.error(`  \x1b[31m[ERROR] Falha crítica no par ${symbol}/${period.name}:\x1b[0m`, error.message);
             }
         }
     }

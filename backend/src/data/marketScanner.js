@@ -13,7 +13,8 @@ const ALLOWED_SYMBOLS = [
 ];
 
 export function isSymbolAllowed(symbol) {
-    return ALLOWED_SYMBOLS.includes(symbol);
+    const normalized = symbol.replace('/', '').replace(':USDT', '').toUpperCase();
+    return ALLOWED_SYMBOLS.some(s => s.replace('/', '').replace(':USDT', '').toUpperCase() === normalized);
 }
 
 export async function scanTopMarketOpportunities() {

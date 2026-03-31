@@ -1,7 +1,15 @@
 {
+  "trendStrategy": {
+    "emaFast": 20,
+    "emaSlow": 50,
+    "emaHTF": 1000,
+    "volumeMultiplier": 1.5,
+    "atrExpansionMultiplier": 1.2,
+    "leverage": 5
+  },
   "regime_detection": {
-    "ema_fast": 9,
-    "ema_slow": 21,
+    "ema_fast": 20,
+    "ema_slow": 50,
     "ema_trend": 200
   },
   "filters": {
@@ -9,14 +17,38 @@
     "rsi_short": 45,
     "volume_period": 20,
     "atr_period": 14,
-    "adx_threshold": 30
+    "adx_threshold": 25
   },
   "risk": {
     "max_positions": 5,
-    "risk_per_trade": 0.005
+    "risk_per_trade": 0.003,
+    "killSwitchLosses": 3,
+    "killSwitchPauseHours": 12
   },
   "execution": {
     "atr_stop_multiplier": 1.5,
-    "atr_take_profit_multiplier": 1.8
+    "atr_take_profit_multiplier": 3.0
+  },
+  "activeStrategy": "V5",
+  "institutionalAlpha": {
+    "volumeMultiplier": 1.5,
+    "atrExpansionMultiplier": 1.1,
+    "maxTradesPerDay": 8,
+    "cooldownMinutes": 60,
+    "emaHTF": 1000
+  },
+  "regimeAdaptiveV5": {
+    "volumeMultiplier": 1.5,
+    "atrExpansionMultiplier": 1.2,
+    "maxTradesPerDay": 3,
+    "cooldownMinutes": 240
+  },
+  "general": {
+    "maxDrawdownStop": 0.10,
+    "avoidTimeStartUTC": "00:00",
+    "avoidTimeEndUTC": "00:00",
+    "maxTradesPerDay": 10,
+    "minEntryIntervalHours": 4,
+    "cooldownMinutes": 240
   }
 }

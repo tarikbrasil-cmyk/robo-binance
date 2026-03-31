@@ -11,3 +11,18 @@ debug
 
 dist
 .next
+
+# Local databases
+bot_data.sqlite
+backend/bot_data.sqlite
+
+# One-off local debug scripts
+dump_logs.js
+backend/dump_logs.js
+
+# Generated historical caches
+backend/historical_data/*_cache.json
+
+# Optimization outputs
+backend/optimization_*.txt
+backend/optimization_*.json

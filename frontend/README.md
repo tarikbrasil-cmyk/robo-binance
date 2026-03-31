@@ -14,3 +14,14 @@ The React Compiler is not enabled on this template because of its impact on dev 
 ## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+
+## Vercel deployment
+
+This repo includes a minimal `vercel.json` to enable Vercel static builds. When importing
+the project into Vercel, set the Root Directory to `frontend`. Build command: `npm run build`.
+Output directory: `dist`.
+
+Notes:
+- The backend is not suitable for serverless deployment on Vercel (WebSockets + SQLite). Deploy
+	the backend to a dedicated server or platform (VPS, Render, Heroku, etc.).
+
