@@ -4,6 +4,9 @@ import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import schedule from 'node-schedule';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import fs from 'fs';
 import apiRoutes from './routes/api.js';
 import { startBinanceWebSocket } from './services/binanceWs.js';
 import { startLiquidationStream } from './services/liquidationWs.js';
@@ -12,6 +15,9 @@ import { BOT_MODE, IS_SPOT } from './services/exchangeClient.js';
 import { getStrategySnapshot, displayStrategyPanel, saveStrategySnapshot } from './utils/strategySnapshot.js';
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname  = dirname(__filename);
 
 const app = express();
 const server = createServer(app);
@@ -27,6 +33,19 @@ app.locals.wss = wss;
 
 // Use as rotas da API (passando wss via locals)
 app.use('/api', apiRoutes);
+
+// ── Serve frontend static build (if present) ─────────────────────────────────
+const frontendDist = join(__dirname, '..', '..', 'frontend', 'dist');
+if (fs.existsSync(frontendDist)) {
+    app.use(express.static(frontendDist));
+    // SPA fallback — any non-API route serves index.html
+    app.get('*', (req, res) => {
+        res.sendFile(join(frontendDist, 'index.html'));
+    });
+    console.log(`[STATIC] Frontend servido de ${frontendDist}`);
+} else {
+    console.log('[STATIC] frontend/dist não encontrado — execute "npm run build" no frontend para ativar.');
+}
 
 // WebSocket para atualizar o frontend
 wss.on('connection', (ws) => {
