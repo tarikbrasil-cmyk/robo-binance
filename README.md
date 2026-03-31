@@ -1,2 +1,4 @@
+teste 
+para 
+binance
 :)
-
