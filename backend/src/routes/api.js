@@ -209,4 +209,40 @@ router.post('/backtest', async (req, res) => {
   }
 });
 
+// ── BENCHMARK ────────────────────────────────────────────────────────────────
+import { runBenchmark, REGIMES, SYMBOLS, TIMEFRAMES, DEFAULT_GRID } from '../benchmark/benchmarkRunner.js';
+import { getMemoryStats } from '../benchmark/columnStore.js';
+
+// GET benchmark config (regimes, symbols, timeframes, grid info)
+router.get('/benchmark/config', (req, res) => {
+    res.json({
+        regimes: REGIMES.map(r => ({ tag: r.tag, label: r.label, start: new Date(r.startMs).toISOString().slice(0, 10), end: new Date(r.endMs).toISOString().slice(0, 10) })),
+        symbols: SYMBOLS,
+        timeframes: TIMEFRAMES,
+        gridSize: Object.values(DEFAULT_GRID).reduce((acc, v) => acc * v.length, 1),
+        grid: DEFAULT_GRID,
+    });
+});
+
+// POST run benchmark (long-running — returns full report)
+router.post('/benchmark/run', async (req, res) => {
+    const { symbols, timeframes, regimes } = req.body || {};
+    try {
+        const report = await runBenchmark({
+            symbols:    symbols    || undefined,
+            timeframes: timeframes || undefined,
+            regimes:    regimes    || undefined,
+        });
+        res.json(report);
+    } catch (error) {
+        console.error('[BENCHMARK ERROR]', error);
+        res.status(500).json({ error: 'Benchmark failed', details: error.message });
+    }
+});
+
+// GET memory stats
+router.get('/benchmark/memory', (req, res) => {
+    res.json(getMemoryStats());
+});
+
 export default router;

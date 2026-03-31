@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Activity, Power, TrendingUp, DollarSign, Settings, Target, Zap, BarChart2, History, Download, ChevronRight, AlertTriangle, FlaskConical } from 'lucide-react'
+import { Activity, Power, TrendingUp, DollarSign, Settings, Target, Zap, BarChart2, History, Download, ChevronRight, AlertTriangle, FlaskConical, Crosshair } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell } from 'recharts'
 import { jsPDF } from 'jspdf'
 import 'jspdf-autotable'
@@ -209,6 +209,7 @@ function App() {
         <NavItem active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<Activity size={20} />} label="Dashboard" />
         <NavItem active={activeTab === 'analytics'} onClick={() => setActiveTab('analytics')} icon={<BarChart2 size={20} />} label="Analytics" />
         <NavItem active={activeTab === 'backtest'} onClick={() => setActiveTab('backtest')} icon={<FlaskConical size={20} />} label="Backtest" />
+        <NavItem active={activeTab === 'benchmark'} onClick={() => setActiveTab('benchmark')} icon={<Crosshair size={20} />} label="Benchmark" />
         <NavItem active={activeTab === 'history'} onClick={() => setActiveTab('history')} icon={<History size={20} />} label="Histórico" />
         <NavItem active={activeTab === 'audit'} onClick={() => setActiveTab('audit')} icon={<ChevronRight size={20} />} label="Auditoria" />
         <NavItem active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} icon={<Settings size={20} />} label="Estratégia" />
@@ -260,6 +261,7 @@ function App() {
         {activeTab === 'history' && <HistoryView history={tradeHistory} onExport={exportData} />}
         {activeTab === 'audit' && <AuditView decisions={decisionTrail} />}
         {activeTab === 'settings' && <SettingsView config={config} onSave={updateStrategy} />}
+        {activeTab === 'benchmark' && <BenchmarkView />}
         
       </div>
     </div>
@@ -611,6 +613,193 @@ function SettingsView({ config, onSave }) {
             </button>
         </div>
     )
+}
+
+// ── BENCHMARK VIEW ───────────────────────────────────────────────────────────
+function BenchmarkView() {
+    const [bmConfig, setBmConfig]   = useState(null);
+    const [running, setRunning]     = useState(false);
+    const [report, setReport]       = useState(null);
+    const [error, setError]         = useState(null);
+    const [selectedRegimes, setSelRegimes] = useState(['BULL', 'BEAR', 'SIDEWAYS']);
+    const [selectedSymbols, setSelSymbols] = useState(['BTCUSDT', 'ETHUSDT']);
+    const [selectedTFs, setSelTFs]         = useState(['5m', '15m', '1h']);
+    const [activeRegimeTab, setActiveRegimeTab] = useState('ALL');
+
+    useEffect(() => {
+        fetch(`${API_URL}/benchmark/config`).then(r => r.json()).then(setBmConfig).catch(() => {});
+    }, []);
+
+    const toggleItem = (arr, setArr, item) => {
+        setArr(prev => prev.includes(item) ? prev.filter(x => x !== item) : [...prev, item]);
+    };
+
+    const runBenchmark = async () => {
+        setRunning(true); setReport(null); setError(null);
+        try {
+            const res = await fetch(`${API_URL}/benchmark/run`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ symbols: selectedSymbols, timeframes: selectedTFs, regimes: selectedRegimes }),
+            });
+            if (!res.ok) { const e = await res.json(); throw new Error(e.details || e.error); }
+            const data = await res.json();
+            setReport(data);
+        } catch (e) { setError(e.message); }
+        finally { setRunning(false); }
+    };
+
+    const chipStyle = (active) => ({
+        padding: '6px 14px', borderRadius: '999px', border: `1px solid ${active ? '#00ff87' : 'rgba(255,255,255,0.1)'}`,
+        background: active ? 'rgba(0,255,135,0.12)' : 'transparent', color: active ? '#00ff87' : 'rgba(255,255,255,0.5)',
+        cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600, userSelect: 'none',
+    });
+
+    const regimeColor = { BULL: '#00e676', BEAR: '#ff4d4f', SIDEWAYS: '#ffb300' };
+
+    // Filter results by active regime tab
+    const displayResults = report ? (activeRegimeTab === 'ALL' ? report.top50 : (report.byRegime?.[activeRegimeTab] || [])) : [];
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {/* Config Panel */}
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                <h3 style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <Crosshair size={20} color="#00ff87" /> Benchmark — Grid × Regime Matrix
+                </h3>
+                <p style={{ fontSize: '0.85rem', opacity: 0.5, marginBottom: '1.5rem' }}>
+                    Testa {bmConfig?.gridSize ?? '...'} combinações de estratégia em períodos fixos de Bull, Bear e Sideways market.
+                </p>
+
+                {/* Regime selection */}
+                <div style={{ marginBottom: '1rem' }}>
+                    <label style={{ fontSize: '0.8rem', opacity: 0.6, display: 'block', marginBottom: '8px' }}>Regimes</label>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {(bmConfig?.regimes || []).map(r => (
+                            <span key={r.tag} style={chipStyle(selectedRegimes.includes(r.tag))} onClick={() => toggleItem(selectedRegimes, setSelRegimes, r.tag)}>
+                                <span style={{ color: regimeColor[r.tag], marginRight: '6px' }}>●</span>
+                                {r.label} ({r.start} → {r.end})
+                            </span>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Symbol selection */}
+                <div style={{ marginBottom: '1rem' }}>
+                    <label style={{ fontSize: '0.8rem', opacity: 0.6, display: 'block', marginBottom: '8px' }}>Symbols</label>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        {(bmConfig?.symbols || []).map(s => (
+                            <span key={s} style={chipStyle(selectedSymbols.includes(s))} onClick={() => toggleItem(selectedSymbols, setSelSymbols, s)}>{s}</span>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Timeframe selection */}
+                <div style={{ marginBottom: '1.5rem' }}>
+                    <label style={{ fontSize: '0.8rem', opacity: 0.6, display: 'block', marginBottom: '8px' }}>Timeframes</label>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        {(bmConfig?.timeframes || []).map(tf => (
+                            <span key={tf} style={chipStyle(selectedTFs.includes(tf))} onClick={() => toggleItem(selectedTFs, setSelTFs, tf)}>{tf}</span>
+                        ))}
+                    </div>
+                </div>
+
+                <button onClick={runBenchmark} disabled={running || selectedRegimes.length === 0}
+                    style={{ padding: '0.85rem 2rem', borderRadius: '10px', border: 'none', background: running ? 'rgba(0,255,135,0.2)' : '#00ff87', color: '#000', fontWeight: 700, cursor: running ? 'not-allowed' : 'pointer', fontSize: '0.95rem' }}>
+                    {running ? '⏳ Executando benchmark...' : '▶ Iniciar Benchmark'}
+                </button>
+
+                {error && <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'rgba(255,77,79,0.1)', border: '1px solid rgba(255,77,79,0.3)', borderRadius: '8px', color: '#ff4d4f', fontSize: '0.9rem' }}>❌ {error}</div>}
+            </div>
+
+            {/* Summary stats */}
+            {report && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem' }}>
+                    {[
+                        { label: 'Total Runs', value: report.totalRuns?.toLocaleString() },
+                        { label: 'Qualified (≥5 trades)', value: report.qualified },
+                        { label: 'Regimes Tested', value: report.config?.regimes?.length },
+                        { label: 'Grid Size', value: report.config?.gridSize },
+                    ].map(({ label, value }) => (
+                        <div key={label} className="glass-panel" style={{ padding: '1rem' }}>
+                            <div style={{ fontSize: '0.75rem', opacity: 0.5, marginBottom: '4px' }}>{label}</div>
+                            <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#00ff87' }}>{value}</div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Regime tabs + Results table */}
+            {report && (
+                <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+                        <span style={chipStyle(activeRegimeTab === 'ALL')} onClick={() => setActiveRegimeTab('ALL')}>All (Top 50)</span>
+                        {report.config?.regimes?.map(tag => (
+                            <span key={tag} style={chipStyle(activeRegimeTab === tag)} onClick={() => setActiveRegimeTab(tag)}>
+                                <span style={{ color: regimeColor[tag], marginRight: '4px' }}>●</span>{tag}
+                            </span>
+                        ))}
+                    </div>
+
+                    <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.82rem' }}>
+                            <thead>
+                                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', opacity: 0.55 }}>
+                                    {['#', 'Regime', 'Symbol', 'TF', 'Strategy', 'Win Rate', 'PF', 'Trades', 'Max DD', 'PnL', 'Score', 'EMA', 'RSI', 'ATR SL/TP', 'Session'].map(h => (
+                                        <th key={h} style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>{h}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {displayResults.map((r, i) => (
+                                    <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                                        <td style={{ padding: '6px 10px', opacity: 0.4 }}>{i + 1}</td>
+                                        <td style={{ padding: '6px 10px' }}>
+                                            <span style={{ color: regimeColor[r.regime], fontWeight: 700, fontSize: '0.78rem' }}>{r.regime}</span>
+                                        </td>
+                                        <td style={{ padding: '6px 10px', fontWeight: 600 }}>{r.symbol}</td>
+                                        <td style={{ padding: '6px 10px' }}>{r.timeframe}</td>
+                                        <td style={{ padding: '6px 10px', fontSize: '0.78rem' }}>{r.strategy}</td>
+                                        <td style={{ padding: '6px 10px', color: r.metrics.winRate >= 55 ? '#00ff87' : '#ffb300', fontWeight: 600 }}>{r.metrics.winRate.toFixed(1)}%</td>
+                                        <td style={{ padding: '6px 10px', color: r.metrics.profitFactor >= 1.3 ? '#00ff87' : '#ffb300' }}>{r.metrics.profitFactor.toFixed(2)}</td>
+                                        <td style={{ padding: '6px 10px' }}>{r.metrics.tradesCount}</td>
+                                        <td style={{ padding: '6px 10px', color: r.metrics.maxDrawdown > 15 ? '#ff4d4f' : '#00ff87' }}>{r.metrics.maxDrawdown.toFixed(1)}%</td>
+                                        <td style={{ padding: '6px 10px', color: r.metrics.totalPnl >= 0 ? '#00ff87' : '#ff4d4f', fontWeight: 600 }}>${r.metrics.totalPnl.toFixed(0)}</td>
+                                        <td style={{ padding: '6px 10px', fontWeight: 700, color: '#60efff' }}>{r.composite.toFixed(3)}</td>
+                                        <td style={{ padding: '6px 10px', fontSize: '0.78rem' }}>{r.params.emaFastPeriod}/{r.params.emaSlowPeriod}</td>
+                                        <td style={{ padding: '6px 10px', fontSize: '0.78rem' }}>{r.params.rsiOversold}/{r.params.rsiOverbought}</td>
+                                        <td style={{ padding: '6px 10px', fontSize: '0.78rem' }}>{r.params.atrMultiplier}×/{r.params.tpMultiplier}×</td>
+                                        <td style={{ padding: '6px 10px', fontSize: '0.78rem' }}>{r.params.session}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        {displayResults.length === 0 && (
+                            <div style={{ textAlign: 'center', padding: '2rem', opacity: 0.4 }}>Nenhum resultado qualificado para este filtro.</div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Validation info */}
+            {report?.validation && (
+                <div className="glass-panel" style={{ padding: '1rem' }}>
+                    <h4 style={{ marginBottom: '0.75rem', fontSize: '0.9rem', opacity: 0.7 }}>Data Validation</h4>
+                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                        {report.validation.map((v, i) => (
+                            <div key={i} style={{ padding: '6px 12px', borderRadius: '8px', fontSize: '0.78rem',
+                                background: v.ok ? 'rgba(0,255,135,0.08)' : 'rgba(255,77,79,0.08)',
+                                border: `1px solid ${v.ok ? 'rgba(0,255,135,0.2)' : 'rgba(255,77,79,0.2)'}`,
+                                color: v.ok ? '#00ff87' : '#ff4d4f' }}>
+                                {v.ok ? '✓' : '⚠'} {v.symbol} {v.timeframe} — {v.candles?.toLocaleString()} candles
+                                {v.gaps > 0 && ` | ${v.gaps} gaps`}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
 }
 
 function AuditView({ decisions }) {
