@@ -4,9 +4,9 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { jsPDF } from 'jspdf'
 import 'jspdf-autotable'
 
-// Constantes
-const API_URL = 'http://localhost:3001/api';
-const WS_URL = 'ws://localhost:3001';
+// Constantes (use Vite env vars in production)
+const API_URL = (import.meta.env.VITE_API_BASE) ? `${import.meta.env.VITE_API_BASE.replace(/\/$/, '')}/api` : 'http://localhost:3001/api';
+const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:3001';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -40,9 +40,20 @@ function App() {
     fetchMetrics();
     fetchDecisionTrail();
     
-    const ws = new WebSocket(WS_URL);
-    
-    ws.onmessage = (event) => {
+        let ws = null;
+        try {
+            // Only attempt WebSocket connection when URL is secure/allowed or running locally
+            const isLocal = typeof location !== 'undefined' && (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+            if (WS_URL.startsWith('wss://') || isLocal || WS_URL.startsWith('ws://')) {
+                ws = new WebSocket(WS_URL);
+            }
+        } catch (err) {
+            console.warn('WebSocket unavailable:', err);
+            ws = null;
+        }
+
+        if (ws) {
+            ws.onmessage = (event) => {
       const payload = JSON.parse(event.data);
       if (payload.type === 'TICKER_UPDATE') {
         const { symbol, price } = payload.data;
