@@ -5,8 +5,35 @@ import { jsPDF } from 'jspdf'
 import 'jspdf-autotable'
 
 // Constantes (use Vite env vars in production)
-const API_URL = (import.meta.env.VITE_API_BASE) ? `${import.meta.env.VITE_API_BASE.replace(/\/$/, '')}/api` : 'http://localhost:3001/api';
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:3001';
+const resolveApiUrl = () => {
+    const envBase = import.meta.env.VITE_API_BASE;
+    if (envBase) return `${envBase.replace(/\/$/, '')}/api`;
+
+    if (typeof window !== 'undefined') {
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        if (isLocal) return 'http://localhost:3001/api';
+        return `${window.location.origin}/api`;
+    }
+
+    return 'http://localhost:3001/api';
+};
+
+const resolveWsUrl = () => {
+    const envWs = import.meta.env.VITE_WS_URL;
+    if (envWs) return envWs;
+
+    if (typeof window !== 'undefined') {
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        if (isLocal) return 'ws://localhost:3001';
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        return `${wsProtocol}//${window.location.host}`;
+    }
+
+    return 'ws://localhost:3001';
+};
+
+const API_URL = resolveApiUrl();
+const WS_URL = resolveWsUrl();
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -82,7 +109,7 @@ function App() {
     }, 10000);
 
     return () => {
-      ws.close();
+            if (ws) ws.close();
       clearInterval(poll);
     };
   }, [activeTab]);
@@ -128,8 +155,14 @@ function App() {
   const toggleBot = async () => {
     const action = botStatus === 'Operando' ? 'stop' : 'start';
     try {
-      await fetch(`${API_URL}/${action}`, { method: 'POST' });
-    } catch (e) { addLog(`Erro ao alternar bot`, 'error'); }
+            const res = await fetch(`${API_URL}/${action}`, { method: 'POST' });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.details || err.error || `Falha ao ${action === 'start' ? 'iniciar' : 'pausar'} bot`);
+            }
+            addLog(action === 'start' ? 'Bot iniciado via painel' : 'Bot pausado via painel', 'success');
+            fetchInitialStatus();
+        } catch (e) { addLog(`Erro ao alternar bot: ${e.message || 'falha desconhecida'}`, 'error'); }
   };
 
   const runBacktest = async () => {

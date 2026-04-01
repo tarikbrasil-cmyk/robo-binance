@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: robo-binance-backend
+    runtime: node
+    region: ohio
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node src/server.js
+    envVars:
+      - key: PORT
+        value: 3001
+      - key: BINANCE_TESTNET
+        value: true
+      - key: BOT_MODE
+        value: FUTURES
+      - key: BINANCE_API_KEY
+        sync: false
+      - key: BINANCE_API_SECRET
+        sync: false

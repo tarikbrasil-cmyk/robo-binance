@@ -23,7 +23,14 @@ const app = express();
 const server = createServer(app);
 const wss = new WebSocketServer({ server });
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:3001',
+    'https://robo-binance-rwvp.vercel.app',
+  ],
+  credentials: true,
+}));
 app.use(express.json());
 
 const PORT = process.env.PORT || 3001;

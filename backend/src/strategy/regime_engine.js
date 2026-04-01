@@ -2,10 +2,36 @@ import fs from 'fs';
 import path from 'path';
 import { EMA, RSI, ATR, ADX, SMA, BollingerBands } from 'technicalindicators';
 
+const DEFAULT_STRATEGY_CONFIG = {
+    general: {
+        strategyName: "ModularStrategyV6_Default",
+        cooldownMinutes: 60, maxTradesPerDay: 10, minEntryIntervalHours: 1,
+        maxSpreadPercent: 0.0005, maxDailyLoss: 0.05, maxDrawdownStop: 0.15,
+        maxConcurrentTrades: 2, avoidTimeStartUTC: "23:59", avoidTimeEndUTC: "00:01",
+    },
+    trendStrategy: {
+        timeframe: "5m", emaFast: 20, emaSlow: 200, emaHTF: 1000,
+        rsiPeriod: 14, atrPeriod: 14, adxPeriod: 14,
+        rsiOversold: 35, rsiOverbought: 65, useEmaHTF: false,
+        atrMultiplierSL: 2.5, atrMultiplierTP: 1.5, useCandleConfirmation: true,
+        useBreakout: false, useMeanReversion: false, useMacd: false,
+        leverage: 10, useSessionFilter: true, session: "NY",
+    },
+    risk: {
+        maxAccountExposure: 0.2, maxRiskPerTrade: 0.02, maxFundingRate: 0.0005,
+        killSwitchLosses: 5, killSwitchPauseHours: 6,
+    },
+    regime: { minVolatilityPercent: 0.001, trendAdxThreshold: 25, rangingAdxThreshold: 20 },
+    allowedSymbols: ["BTC/USDT", "BTC/USDT:USDT"],
+};
+
 export function loadStrategyConfig() {
     const configPath = path.join(process.cwd(), 'config', 'strategy_config.json');
     if (!fs.existsSync(configPath)) {
-        throw new Error("strategy_config.json not found");
+        console.warn('[CONFIG] strategy_config.json not found — creating default config.');
+        const dir = path.dirname(configPath);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(configPath, JSON.stringify(DEFAULT_STRATEGY_CONFIG, null, 2));
     }
     return JSON.parse(fs.readFileSync(configPath, 'utf8'));
 }
