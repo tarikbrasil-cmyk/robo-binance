@@ -5,31 +5,22 @@ import { jsPDF } from 'jspdf'
 import 'jspdf-autotable'
 
 // Constantes (use Vite env vars in production)
-const resolveApiUrl = () => {
-    const envBase = import.meta.env.VITE_API_BASE;
-    if (envBase) return `${envBase.replace(/\/$/, '')}/api`;
+const RENDER_BACKEND = 'https://robo-binance-backend.onrender.com';
 
+const resolveApiUrl = () => {
     if (typeof window !== 'undefined') {
         const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         if (isLocal) return 'http://localhost:3001/api';
-        return `${window.location.origin}/api`;
     }
-
-    return 'http://localhost:3001/api';
+    return `${RENDER_BACKEND}/api`;
 };
 
 const resolveWsUrl = () => {
-    const envWs = import.meta.env.VITE_WS_URL;
-    if (envWs) return envWs;
-
     if (typeof window !== 'undefined') {
         const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         if (isLocal) return 'ws://localhost:3001';
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        return `${wsProtocol}//${window.location.host}`;
     }
-
-    return 'ws://localhost:3001';
+    return `wss://robo-binance-backend.onrender.com`;
 };
 
 const API_URL = resolveApiUrl();
