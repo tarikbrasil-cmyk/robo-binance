@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { riskManager } from '../risk/riskManager.js';
 import exchangeClient, { getUnifiedBalance, BOT_MODE, IS_DEMO_TRADING } from '../services/exchangeClient.js';
-import { getDailyPnL, getDecisionJournal, getHistory, getMetrics } from '../database/db.js';
+import { getDailyPnL, getDecisionJournal, getHistory, getMetrics, getStrategies, getStrategy, insertStrategy, updateStrategy, deleteStrategy, activateStrategy, deactivateStrategy } from '../database/db.js';
 import { activeTrades } from '../execution/tradeMonitor.js';
 import { broadcastMessage } from '../utils/websocket.js';
 import { Parser } from 'json2csv';
@@ -326,5 +326,151 @@ router.post('/benchmark/apply', (req, res) => {
 router.get('/benchmark/memory', (req, res) => {
     res.json(getMemoryStats());
 });
+
+// ── STRATEGIES CRUD ──────────────────────────────────────────────────────────
+
+// GET all saved strategies
+router.get('/strategies', async (req, res) => {
+    try {
+        const strategies = await getStrategies();
+        res.json(strategies);
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao buscar estratégias', details: error.message });
+    }
+});
+
+// POST create a new strategy
+router.post('/strategies', async (req, res) => {
+    const { name, source, params, symbol, timeframe, is_active, benchmark_validated, backtest_validated, benchmark_score } = req.body;
+    if (!name || !params) {
+        return res.status(400).json({ error: 'name e params são obrigatórios' });
+    }
+    if (name.length > 100) {
+        return res.status(400).json({ error: 'Nome da estratégia deve ter no máximo 100 caracteres' });
+    }
+    try {
+        // If this strategy should be active, apply its params to the live config
+        if (is_active) {
+            applyStrategyToLiveConfig(params, symbol, timeframe, name);
+        }
+        const result = await insertStrategy({ name, source, params, symbol, timeframe, is_active, benchmark_validated, backtest_validated, benchmark_score });
+        if (is_active) {
+            await activateStrategy(result.id);
+        }
+        const strategy = await getStrategy(result.id);
+        res.json(strategy);
+    } catch (error) {
+        if (error.message.includes('UNIQUE') || error.message.includes('unique')) {
+            return res.status(409).json({ error: 'Já existe uma estratégia com esse nome' });
+        }
+        res.status(500).json({ error: 'Erro ao criar estratégia', details: error.message });
+    }
+});
+
+// PUT update a strategy
+router.put('/strategies/:id', async (req, res) => {
+    const id = parseInt(req.params.id);
+    const fields = req.body;
+    if (fields.name && fields.name.length > 100) {
+        return res.status(400).json({ error: 'Nome da estratégia deve ter no máximo 100 caracteres' });
+    }
+    try {
+        await updateStrategy(id, fields);
+        const strategy = await getStrategy(id);
+        if (!strategy) return res.status(404).json({ error: 'Estratégia não encontrada' });
+        res.json(strategy);
+    } catch (error) {
+        if (error.message.includes('UNIQUE') || error.message.includes('unique')) {
+            return res.status(409).json({ error: 'Já existe uma estratégia com esse nome' });
+        }
+        res.status(500).json({ error: 'Erro ao atualizar estratégia', details: error.message });
+    }
+});
+
+// DELETE a strategy
+router.delete('/strategies/:id', async (req, res) => {
+    const id = parseInt(req.params.id);
+    try {
+        const strategy = await getStrategy(id);
+        if (!strategy) return res.status(404).json({ error: 'Estratégia não encontrada' });
+        if (strategy.is_active) return res.status(400).json({ error: 'Desative a estratégia antes de excluí-la' });
+        await deleteStrategy(id);
+        res.json({ message: 'Estratégia excluída' });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao excluir estratégia', details: error.message });
+    }
+});
+
+// POST activate a strategy (deactivates all others + applies to live config)
+router.post('/strategies/:id/activate', async (req, res) => {
+    const id = parseInt(req.params.id);
+    try {
+        const strategy = await getStrategy(id);
+        if (!strategy) return res.status(404).json({ error: 'Estratégia não encontrada' });
+        await activateStrategy(id);
+        // Apply to live config
+        applyStrategyToLiveConfig(strategy.params, strategy.symbol, strategy.timeframe, strategy.name);
+        const updated = await getStrategy(id);
+        res.json({ message: 'Estratégia ativada', strategy: updated });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao ativar estratégia', details: error.message });
+    }
+});
+
+// POST deactivate a strategy
+router.post('/strategies/:id/deactivate', async (req, res) => {
+    const id = parseInt(req.params.id);
+    try {
+        const strategy = await getStrategy(id);
+        if (!strategy) return res.status(404).json({ error: 'Estratégia não encontrada' });
+        await deactivateStrategy(id);
+        const updated = await getStrategy(id);
+        res.json({ message: 'Estratégia desativada', strategy: updated });
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao desativar estratégia', details: error.message });
+    }
+});
+
+// Helper: apply strategy params to the live config file
+function applyStrategyToLiveConfig(params, symbol, timeframe, strategyName) {
+    let cfg = readStrategyConfig() || { general: {}, trendStrategy: {}, risk: {}, regime: {}, allowedSymbols: [] };
+    cfg.trendStrategy = cfg.trendStrategy || {};
+
+    // Map params
+    if (params.emaFast !== undefined || params.emaFastPeriod !== undefined)
+        cfg.trendStrategy.emaFast = params.emaFast ?? params.emaFastPeriod;
+    if (params.emaSlow !== undefined || params.emaSlowPeriod !== undefined)
+        cfg.trendStrategy.emaSlow = params.emaSlow ?? params.emaSlowPeriod;
+    if (params.rsiOversold !== undefined) cfg.trendStrategy.rsiOversold = params.rsiOversold;
+    if (params.rsiOverbought !== undefined) cfg.trendStrategy.rsiOverbought = params.rsiOverbought;
+    if (params.atrMultiplierSL !== undefined || params.atrMultiplier !== undefined)
+        cfg.trendStrategy.atrMultiplierSL = params.atrMultiplierSL ?? params.atrMultiplier;
+    if (params.atrMultiplierTP !== undefined || params.tpMultiplier !== undefined)
+        cfg.trendStrategy.atrMultiplierTP = params.atrMultiplierTP ?? params.tpMultiplier;
+    if (params.useBreakout !== undefined) cfg.trendStrategy.useBreakout = params.useBreakout;
+    if (params.useMeanReversion !== undefined) cfg.trendStrategy.useMeanReversion = params.useMeanReversion;
+    if (params.session !== undefined) cfg.trendStrategy.session = params.session;
+    if (params.useSessionFilter !== undefined) cfg.trendStrategy.useSessionFilter = params.useSessionFilter;
+    if (params.useCandleConfirmation !== undefined) cfg.trendStrategy.useCandleConfirmation = params.useCandleConfirmation;
+    if (params.leverage !== undefined) cfg.trendStrategy.leverage = parseInt(params.leverage);
+    if (params.riskPerTrade !== undefined) { cfg.risk = cfg.risk || {}; cfg.risk.maxRiskPerTrade = parseFloat(params.riskPerTrade); }
+    if (params.emaHTF !== undefined) cfg.trendStrategy.emaHTF = params.emaHTF;
+    if (params.useEmaHTF !== undefined) cfg.trendStrategy.useEmaHTF = params.useEmaHTF;
+    if (params.rsiPeriod !== undefined) cfg.trendStrategy.rsiPeriod = params.rsiPeriod;
+
+    if (timeframe) cfg.trendStrategy.timeframe = timeframe;
+    if (symbol) {
+        const base = symbol.replace('USDT', '');
+        cfg.allowedSymbols = [`${base}/USDT`, `${base}/USDT:USDT`];
+    }
+
+    cfg.general = cfg.general || {};
+    cfg.general.strategyName = strategyName || 'unnamed';
+    cfg.general.lastUpdatedAt = new Date().toISOString();
+    cfg.general.lastUpdatedSource = 'strategy_manager';
+
+    writeStrategyConfig(cfg);
+    console.log(`[STRATEGY] Live config updated from strategy: ${strategyName}`);
+}
 
 export default router;

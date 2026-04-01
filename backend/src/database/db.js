@@ -64,6 +64,22 @@ function initDb() {
     db.run(`CREATE INDEX IF NOT EXISTS idx_decision_journal_timestamp ON decision_journal(timestamp DESC)`);
     db.run(`CREATE INDEX IF NOT EXISTS idx_decision_journal_symbol ON decision_journal(symbol)`);
 
+    // Tabela de Estratégias salvas
+    db.run(`CREATE TABLE IF NOT EXISTS strategies (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE,
+      source TEXT NOT NULL DEFAULT 'manual',
+      params_json TEXT NOT NULL,
+      symbol TEXT,
+      timeframe TEXT,
+      is_active INTEGER NOT NULL DEFAULT 0,
+      benchmark_validated INTEGER NOT NULL DEFAULT 0,
+      backtest_validated INTEGER NOT NULL DEFAULT 0,
+      benchmark_score REAL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
+
     // Migração: Adicionar coluna mode se não existir (para DBs legados)
     db.all("PRAGMA table_info(logs)", (err, rows) => {
         if (!rows.find(r => r.name === 'mode')) {
@@ -255,6 +271,101 @@ export function getDailyPnL() {
     db.get(query, [], (err, row) => {
       if (err) reject(err);
       else resolve(row.daily_profit || 0);
+    });
+  });
+}
+
+// ── Strategy CRUD ──────────────────────────────────────────────────────────
+export function getStrategies() {
+  return new Promise((resolve, reject) => {
+    db.all(`SELECT * FROM strategies ORDER BY is_active DESC, updated_at DESC`, [], (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows.map(r => ({ ...r, params: JSON.parse(r.params_json) })));
+    });
+  });
+}
+
+export function getStrategy(id) {
+  return new Promise((resolve, reject) => {
+    db.get(`SELECT * FROM strategies WHERE id = ?`, [id], (err, row) => {
+      if (err) reject(err);
+      else resolve(row ? { ...row, params: JSON.parse(row.params_json) } : null);
+    });
+  });
+}
+
+export function insertStrategy({ name, source, params, symbol, timeframe, is_active, benchmark_validated, backtest_validated, benchmark_score }) {
+  return new Promise((resolve, reject) => {
+    // Enforce 50 strategy limit
+    db.get(`SELECT COUNT(*) as cnt FROM strategies`, [], (err, row) => {
+      if (err) return reject(err);
+      if (row.cnt >= 50) return reject(new Error('Limite de 50 estratégias atingido. Exclua alguma antes de criar outra.'));
+
+      const paramsJson = JSON.stringify(params);
+      db.run(
+        `INSERT INTO strategies (name, source, params_json, symbol, timeframe, is_active, benchmark_validated, backtest_validated, benchmark_score)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [name, source || 'manual', paramsJson, symbol || null, timeframe || null,
+         is_active ? 1 : 0, benchmark_validated ? 1 : 0, backtest_validated ? 1 : 0, benchmark_score || null],
+        function (err) {
+          if (err) reject(err);
+          else resolve({ id: this.lastID });
+        }
+      );
+    });
+  });
+}
+
+export function updateStrategy(id, fields) {
+  return new Promise((resolve, reject) => {
+    const sets = [];
+    const vals = [];
+    if (fields.name !== undefined)               { sets.push('name = ?');               vals.push(fields.name); }
+    if (fields.params !== undefined)              { sets.push('params_json = ?');        vals.push(JSON.stringify(fields.params)); }
+    if (fields.symbol !== undefined)              { sets.push('symbol = ?');             vals.push(fields.symbol); }
+    if (fields.timeframe !== undefined)           { sets.push('timeframe = ?');          vals.push(fields.timeframe); }
+    if (fields.benchmark_validated !== undefined) { sets.push('benchmark_validated = ?');vals.push(fields.benchmark_validated ? 1 : 0); }
+    if (fields.backtest_validated !== undefined)  { sets.push('backtest_validated = ?'); vals.push(fields.backtest_validated ? 1 : 0); }
+    if (fields.benchmark_score !== undefined)     { sets.push('benchmark_score = ?');    vals.push(fields.benchmark_score); }
+    sets.push('updated_at = CURRENT_TIMESTAMP');
+    vals.push(id);
+    db.run(`UPDATE strategies SET ${sets.join(', ')} WHERE id = ?`, vals, function (err) {
+      if (err) reject(err);
+      else resolve({ changes: this.changes });
+    });
+  });
+}
+
+export function deleteStrategy(id) {
+  return new Promise((resolve, reject) => {
+    db.run(`DELETE FROM strategies WHERE id = ?`, [id], function (err) {
+      if (err) reject(err);
+      else resolve({ changes: this.changes });
+    });
+  });
+}
+
+export function activateStrategy(id) {
+  return new Promise((resolve, reject) => {
+    db.serialize(() => {
+      // Deactivate all
+      db.run(`UPDATE strategies SET is_active = 0`, [], (err) => {
+        if (err) return reject(err);
+        // Activate the selected one
+        db.run(`UPDATE strategies SET is_active = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, [id], function (err) {
+          if (err) reject(err);
+          else resolve({ changes: this.changes });
+        });
+      });
+    });
+  });
+}
+
+export function deactivateStrategy(id) {
+  return new Promise((resolve, reject) => {
+    db.run(`UPDATE strategies SET is_active = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?`, [id], function (err) {
+      if (err) reject(err);
+      else resolve({ changes: this.changes });
     });
   });
 }

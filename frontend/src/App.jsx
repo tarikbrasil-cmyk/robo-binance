@@ -445,32 +445,29 @@ function HistoryView({ history, onExport }) {
 }
 
 function SettingsView({ config, onSave }) {
+    const [strategies, setStrategies] = useState([]);
+    const [saveName, setSaveName] = useState('');
+    const [showSaveModal, setShowSaveModal] = useState(false);
+    const [stratMsg, setStratMsg] = useState(null);
+
     const defaults = {
-        // Risk / Position
         leverage: config.leverage ?? 10,
         riskPerTrade: (config.riskPerTrade ?? 0.02) * 100,
-        // Symbol & Timeframe
         symbol: config.symbol ?? 'ETHUSDT',
         timeframe: config.timeframe ?? '5m',
-        // Engine Mode
         useBreakout: config.useBreakout ?? false,
         useMeanReversion: config.useMeanReversion ?? false,
-        // EMA Trend Alignment
         emaFast: config.emaFast ?? 50,
         emaSlow: config.emaSlow ?? 100,
         emaHTF: config.emaHTF ?? 1000,
         useEmaHTF: config.useEmaHTF ?? false,
-        // RSI
         rsiPeriod: config.rsiPeriod ?? 14,
         rsiOversold: config.rsiOversold ?? 35,
         rsiOverbought: config.rsiOverbought ?? 65,
-        // ATR-based SL / TP
         atrMultiplierSL: config.atrMultiplierSL ?? 3.5,
         atrMultiplierTP: config.atrMultiplierTP ?? 1.5,
-        // Session Filter
         useSessionFilter: config.useSessionFilter ?? true,
         session: config.session ?? 'NY',
-        // Candle confirmation
         useCandleConfirmation: config.useCandleConfirmation ?? true,
     };
     const [local, setLocal] = useState(defaults);
@@ -480,161 +477,364 @@ function SettingsView({ config, onSave }) {
     const labelStyle = { fontSize: '0.85rem', opacity: 0.6, marginBottom: '6px', display: 'block' };
     const sectionTitle = (text) => <h4 style={{ gridColumn: '1 / -1', marginTop: '0.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.06)', fontSize: '0.95rem', color: '#60efff' }}>{text}</h4>;
 
-    const handleSave = () => {
-        onSave({
-            leverage: parseInt(local.leverage),
-            riskPerTrade: local.riskPerTrade / 100,
-            symbol: local.symbol,
-            timeframe: local.timeframe,
-            useBreakout: local.useBreakout,
-            useMeanReversion: local.useMeanReversion,
-            emaFast: parseInt(local.emaFast),
-            emaSlow: parseInt(local.emaSlow),
-            emaHTF: parseInt(local.emaHTF),
-            useEmaHTF: local.useEmaHTF,
-            rsiPeriod: parseInt(local.rsiPeriod),
-            rsiOversold: parseInt(local.rsiOversold),
-            rsiOverbought: parseInt(local.rsiOverbought),
-            atrMultiplierSL: parseFloat(local.atrMultiplierSL),
-            atrMultiplierTP: parseFloat(local.atrMultiplierTP),
-            useSessionFilter: local.useSessionFilter,
-            session: local.session,
-            useCandleConfirmation: local.useCandleConfirmation,
+    const fetchStrategies = () => {
+        fetch(`${API_URL}/strategies`).then(r => r.json()).then(data => {
+            if (Array.isArray(data)) setStrategies(data);
+        }).catch(() => {});
+    };
+
+    useEffect(() => { fetchStrategies(); }, []);
+
+    const activeStrategy = strategies.find(s => s.is_active);
+
+    const buildParams = () => ({
+        leverage: parseInt(local.leverage),
+        riskPerTrade: local.riskPerTrade / 100,
+        symbol: local.symbol,
+        timeframe: local.timeframe,
+        useBreakout: local.useBreakout,
+        useMeanReversion: local.useMeanReversion,
+        emaFast: parseInt(local.emaFast),
+        emaSlow: parseInt(local.emaSlow),
+        emaHTF: parseInt(local.emaHTF),
+        useEmaHTF: local.useEmaHTF,
+        rsiPeriod: parseInt(local.rsiPeriod),
+        rsiOversold: parseInt(local.rsiOversold),
+        rsiOverbought: parseInt(local.rsiOverbought),
+        atrMultiplierSL: parseFloat(local.atrMultiplierSL),
+        atrMultiplierTP: parseFloat(local.atrMultiplierTP),
+        useSessionFilter: local.useSessionFilter,
+        session: local.session,
+        useCandleConfirmation: local.useCandleConfirmation,
+    });
+
+    const handleSave = () => { onSave(buildParams()); };
+
+    const handleSaveAsStrategy = async () => {
+        if (!saveName.trim()) return;
+        const params = buildParams();
+        try {
+            const res = await fetch(`${API_URL}/strategies`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: saveName.trim(), source: 'manual', params, symbol: local.symbol, timeframe: local.timeframe }),
+            });
+            if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Erro'); }
+            setShowSaveModal(false);
+            setSaveName('');
+            setStratMsg({ type: 'success', text: `✅ Estratégia "${saveName.trim()}" salva!` });
+            setTimeout(() => setStratMsg(null), 4000);
+            fetchStrategies();
+        } catch (e) {
+            setStratMsg({ type: 'error', text: `❌ ${e.message}` });
+            setTimeout(() => setStratMsg(null), 4000);
+        }
+    };
+
+    const handleActivate = async (id) => {
+        try {
+            const res = await fetch(`${API_URL}/strategies/${id}/activate`, { method: 'POST' });
+            if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Erro'); }
+            setStratMsg({ type: 'success', text: '✅ Estratégia ativada e aplicada ao bot!' });
+            setTimeout(() => setStratMsg(null), 4000);
+            fetchStrategies();
+        } catch (e) {
+            setStratMsg({ type: 'error', text: `❌ ${e.message}` });
+            setTimeout(() => setStratMsg(null), 4000);
+        }
+    };
+
+    const handleDeactivate = async (id) => {
+        try {
+            await fetch(`${API_URL}/strategies/${id}/deactivate`, { method: 'POST' });
+            fetchStrategies();
+        } catch (e) {}
+    };
+
+    const handleDelete = async (id) => {
+        if (!confirm('Tem certeza que deseja excluir esta estratégia?')) return;
+        try {
+            const res = await fetch(`${API_URL}/strategies/${id}`, { method: 'DELETE' });
+            if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Erro'); }
+            setStratMsg({ type: 'success', text: '🗑️ Estratégia excluída' });
+            setTimeout(() => setStratMsg(null), 4000);
+            fetchStrategies();
+        } catch (e) {
+            setStratMsg({ type: 'error', text: `❌ ${e.message}` });
+            setTimeout(() => setStratMsg(null), 4000);
+        }
+    };
+
+    const loadStrategy = (strat) => {
+        const p = strat.params || {};
+        setLocal({
+            leverage: p.leverage ?? defaults.leverage,
+            riskPerTrade: p.riskPerTrade ? p.riskPerTrade * 100 : defaults.riskPerTrade,
+            symbol: strat.symbol || p.symbol || defaults.symbol,
+            timeframe: strat.timeframe || p.timeframe || defaults.timeframe,
+            useBreakout: p.useBreakout ?? defaults.useBreakout,
+            useMeanReversion: p.useMeanReversion ?? defaults.useMeanReversion,
+            emaFast: p.emaFast ?? p.emaFastPeriod ?? defaults.emaFast,
+            emaSlow: p.emaSlow ?? p.emaSlowPeriod ?? defaults.emaSlow,
+            emaHTF: p.emaHTF ?? defaults.emaHTF,
+            useEmaHTF: p.useEmaHTF ?? defaults.useEmaHTF,
+            rsiPeriod: p.rsiPeriod ?? defaults.rsiPeriod,
+            rsiOversold: p.rsiOversold ?? defaults.rsiOversold,
+            rsiOverbought: p.rsiOverbought ?? defaults.rsiOverbought,
+            atrMultiplierSL: p.atrMultiplierSL ?? p.atrMultiplier ?? defaults.atrMultiplierSL,
+            atrMultiplierTP: p.atrMultiplierTP ?? p.tpMultiplier ?? defaults.atrMultiplierTP,
+            useSessionFilter: p.useSessionFilter ?? defaults.useSessionFilter,
+            session: p.session ?? defaults.session,
+            useCandleConfirmation: p.useCandleConfirmation ?? defaults.useCandleConfirmation,
         });
     };
 
-    // Derive active mode label
     const modeLabel = local.useBreakout ? 'Breakout' : local.useMeanReversion ? 'Mean Reversion' : 'Pullback (RSI)';
+    const badgeStyle = (ok) => ({ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 10px', borderRadius: '999px', fontSize: '0.72rem', fontWeight: 700, background: ok ? 'rgba(0,255,135,0.12)' : 'rgba(255,255,255,0.04)', color: ok ? '#00ff87' : 'rgba(255,255,255,0.35)', border: `1px solid ${ok ? 'rgba(0,255,135,0.3)' : 'rgba(255,255,255,0.08)'}` });
 
     return (
-        <div className="glass-panel col-span-8" style={{ padding: '2rem', maxWidth: '820px' }}>
-            <h3 style={{ marginBottom: '0.5rem' }}>🛠️ Painel de Estratégia — ModularStrategyV6</h3>
-            <p style={{ fontSize: '0.85rem', opacity: 0.5, marginBottom: '1.5rem' }}>Configuração completa para backtests e operações live.</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '900px' }}>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
+            {/* Feedback message */}
+            {stratMsg && (
+                <div style={{ padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.9rem',
+                    background: stratMsg.type === 'success' ? 'rgba(0,255,135,0.1)' : 'rgba(255,77,79,0.1)',
+                    border: `1px solid ${stratMsg.type === 'success' ? 'rgba(0,255,135,0.3)' : 'rgba(255,77,79,0.3)'}`,
+                    color: stratMsg.type === 'success' ? '#00ff87' : '#ff4d4f' }}>{stratMsg.text}</div>
+            )}
 
-                {/* ── Symbol & Timeframe ── */}
-                {sectionTitle('Ativo e Timeframe')}
-                <div>
-                    <label style={labelStyle}>Símbolo</label>
-                    <select value={local.symbol} onChange={e => set('symbol', e.target.value)} style={inputStyle}>
-                        <option value="BTCUSDT">BTCUSDT</option>
-                        <option value="ETHUSDT">ETHUSDT</option>
-                        <option value="SOLUSDT">SOLUSDT</option>
-                        <option value="BNBUSDT">BNBUSDT</option>
-                    </select>
-                </div>
-                <div>
-                    <label style={labelStyle}>Timeframe</label>
-                    <select value={local.timeframe} onChange={e => set('timeframe', e.target.value)} style={inputStyle}>
-                        <option value="1m">1m</option>
-                        <option value="3m">3m</option>
-                        <option value="5m">5m</option>
-                        <option value="15m">15m</option>
-                        <option value="30m">30m</option>
-                        <option value="1h">1h</option>
-                        <option value="4h">4h</option>
-                    </select>
+            {/* ── ACTIVE STRATEGY BLOCK ── */}
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <Zap size={20} color="#00ff87" /> Estratégia Atual — Robô Conta Demo
+                </h3>
+                {activeStrategy ? (
+                    <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                            <span style={{ fontWeight: 800, fontSize: '1.1rem', color: '#00ff87' }}>● {activeStrategy.name}</span>
+                            <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>({activeStrategy.source})</span>
+                            <span style={badgeStyle(activeStrategy.benchmark_validated)}>{activeStrategy.benchmark_validated ? '✓ Benchmark' : '○ Benchmark'}</span>
+                            <span style={badgeStyle(activeStrategy.backtest_validated)}>{activeStrategy.backtest_validated ? '✓ Backtest' : '○ Backtest'}</span>
+                            {activeStrategy.benchmark_score != null && (
+                                <span style={{ fontSize: '0.78rem', color: '#60efff' }}>Score: {activeStrategy.benchmark_score.toFixed(3)}</span>
+                            )}
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem' }}>
+                            {[
+                                { label: 'Símbolo', value: activeStrategy.symbol || '-' },
+                                { label: 'Timeframe', value: activeStrategy.timeframe || '-' },
+                                { label: 'EMA Fast/Slow', value: `${activeStrategy.params?.emaFast ?? activeStrategy.params?.emaFastPeriod ?? '-'}/${activeStrategy.params?.emaSlow ?? activeStrategy.params?.emaSlowPeriod ?? '-'}` },
+                                { label: 'RSI', value: `${activeStrategy.params?.rsiOversold ?? '-'}/${activeStrategy.params?.rsiOverbought ?? '-'}` },
+                                { label: 'ATR SL/TP', value: `${activeStrategy.params?.atrMultiplierSL ?? activeStrategy.params?.atrMultiplier ?? '-'}×/${activeStrategy.params?.atrMultiplierTP ?? activeStrategy.params?.tpMultiplier ?? '-'}×` },
+                                { label: 'Session', value: activeStrategy.params?.session ?? '-' },
+                                { label: 'Leverage', value: activeStrategy.params?.leverage ? `${activeStrategy.params.leverage}×` : '-' },
+                                { label: 'Modo', value: activeStrategy.params?.useBreakout ? 'Breakout' : activeStrategy.params?.useMeanReversion ? 'Mean Rev.' : 'Pullback' },
+                            ].map(({ label, value }) => (
+                                <div key={label} style={{ padding: '0.6rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
+                                    <div style={{ fontSize: '0.7rem', opacity: 0.4, marginBottom: '2px' }}>{label}</div>
+                                    <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{value}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ) : (
+                    <div style={{ opacity: 0.4, padding: '1rem', textAlign: 'center' }}>Nenhuma estratégia ativada. Use o editor abaixo ou ative uma da lista.</div>
+                )}
+            </div>
+
+            {/* ── SAVED STRATEGIES LIST ── */}
+            <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <Settings size={20} color="#60efff" /> Estratégias Salvas
+                    <span style={{ fontSize: '0.75rem', opacity: 0.4, fontWeight: 400 }}>({strategies.length}/50)</span>
+                </h3>
+                {strategies.length === 0 ? (
+                    <div style={{ opacity: 0.4, textAlign: 'center', padding: '1.5rem' }}>Nenhuma estratégia salva ainda. Crie uma abaixo ou aplique do Benchmark.</div>
+                ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {strategies.map(s => (
+                            <div key={s.id} style={{
+                                padding: '0.75rem 1rem', borderRadius: '10px',
+                                background: s.is_active ? 'rgba(0,255,135,0.06)' : 'rgba(255,255,255,0.02)',
+                                border: `1px solid ${s.is_active ? 'rgba(0,255,135,0.25)' : 'rgba(255,255,255,0.06)'}`,
+                                display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px',
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', flex: 1 }}>
+                                    {s.is_active && <span style={{ color: '#00ff87', fontWeight: 700, fontSize: '0.78rem' }}>● ATIVA</span>}
+                                    <span style={{ fontWeight: 700, fontSize: '0.88rem' }}>{s.name}</span>
+                                    <span style={{ fontSize: '0.75rem', opacity: 0.4 }}>{s.source}</span>
+                                    <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>{s.symbol || ''} {s.timeframe || ''}</span>
+                                    <span style={badgeStyle(s.benchmark_validated)}>{s.benchmark_validated ? '✓ BM' : '○ BM'}</span>
+                                    <span style={badgeStyle(s.backtest_validated)}>{s.backtest_validated ? '✓ BT' : '○ BT'}</span>
+                                    {s.benchmark_score != null && <span style={{ fontSize: '0.72rem', color: '#60efff' }}>{s.benchmark_score.toFixed(3)}</span>}
+                                </div>
+                                <div style={{ display: 'flex', gap: '6px' }}>
+                                    <button onClick={() => loadStrategy(s)} style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid rgba(96,239,255,0.3)', background: 'rgba(96,239,255,0.08)', color: '#60efff', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer' }}>Carregar</button>
+                                    {s.is_active ? (
+                                        <button onClick={() => handleDeactivate(s.id)} style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid rgba(255,179,0,0.3)', background: 'rgba(255,179,0,0.08)', color: '#ffb300', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer' }}>Desativar</button>
+                                    ) : (
+                                        <button onClick={() => handleActivate(s.id)} style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid rgba(0,255,135,0.3)', background: 'rgba(0,255,135,0.08)', color: '#00ff87', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer' }}>Ativar</button>
+                                    )}
+                                    {!s.is_active && (
+                                        <button onClick={() => handleDelete(s.id)} style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid rgba(255,77,79,0.3)', background: 'rgba(255,77,79,0.08)', color: '#ff4d4f', fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer' }}>Excluir</button>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* ── STRATEGY EDITOR ── */}
+            <div className="glass-panel" style={{ padding: '2rem' }}>
+                <h3 style={{ marginBottom: '0.5rem' }}>🛠️ Editor de Estratégia — ModularStrategyV6</h3>
+                <p style={{ fontSize: '0.85rem', opacity: 0.5, marginBottom: '1.5rem' }}>Configure os parâmetros e aplique ao bot ou salve como nova estratégia.</p>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
+                    {sectionTitle('Ativo e Timeframe')}
+                    <div>
+                        <label style={labelStyle}>Símbolo</label>
+                        <select value={local.symbol} onChange={e => set('symbol', e.target.value)} style={inputStyle}>
+                            <option value="BTCUSDT">BTCUSDT</option>
+                            <option value="ETHUSDT">ETHUSDT</option>
+                            <option value="SOLUSDT">SOLUSDT</option>
+                            <option value="BNBUSDT">BNBUSDT</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style={labelStyle}>Timeframe</label>
+                        <select value={local.timeframe} onChange={e => set('timeframe', e.target.value)} style={inputStyle}>
+                            <option value="1m">1m</option>
+                            <option value="3m">3m</option>
+                            <option value="5m">5m</option>
+                            <option value="15m">15m</option>
+                            <option value="30m">30m</option>
+                            <option value="1h">1h</option>
+                            <option value="4h">4h</option>
+                        </select>
+                    </div>
+
+                    {sectionTitle(`Modo de Operação — ${modeLabel}`)}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <input type="checkbox" id="chkBreakout" checked={local.useBreakout} onChange={e => set('useBreakout', e.target.checked)} />
+                        <label htmlFor="chkBreakout" style={{ fontSize: '0.9rem' }}>Breakout</label>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <input type="checkbox" id="chkMR" checked={local.useMeanReversion} onChange={e => set('useMeanReversion', e.target.checked)} />
+                        <label htmlFor="chkMR" style={{ fontSize: '0.9rem' }}>Mean Reversion</label>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <input type="checkbox" id="chkCandle" checked={local.useCandleConfirmation} onChange={e => set('useCandleConfirmation', e.target.checked)} />
+                        <label htmlFor="chkCandle" style={{ fontSize: '0.9rem' }}>Candle Confirmation</label>
+                    </div>
+
+                    {sectionTitle('Multi-EMA Trend Alignment')}
+                    <div>
+                        <label style={labelStyle}>EMA Fast</label>
+                        <input type="number" value={local.emaFast} onChange={e => set('emaFast', e.target.value)} style={inputStyle} />
+                    </div>
+                    <div>
+                        <label style={labelStyle}>EMA Slow</label>
+                        <input type="number" value={local.emaSlow} onChange={e => set('emaSlow', e.target.value)} style={inputStyle} />
+                    </div>
+                    <div>
+                        <label style={labelStyle}>EMA HTF</label>
+                        <input type="number" value={local.emaHTF} onChange={e => set('emaHTF', e.target.value)} style={inputStyle} />
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <input type="checkbox" id="chkHTF" checked={local.useEmaHTF} onChange={e => set('useEmaHTF', e.target.checked)} />
+                        <label htmlFor="chkHTF" style={{ fontSize: '0.9rem' }}>Usar EMA HTF Filter</label>
+                    </div>
+
+                    {sectionTitle('RSI (Pullback Filter)')}
+                    <div>
+                        <label style={labelStyle}>RSI Período</label>
+                        <input type="number" value={local.rsiPeriod} onChange={e => set('rsiPeriod', e.target.value)} style={inputStyle} />
+                    </div>
+                    <div>
+                        <label style={labelStyle}>RSI Oversold</label>
+                        <input type="number" value={local.rsiOversold} onChange={e => set('rsiOversold', e.target.value)} style={inputStyle} />
+                    </div>
+                    <div>
+                        <label style={labelStyle}>RSI Overbought</label>
+                        <input type="number" value={local.rsiOverbought} onChange={e => set('rsiOverbought', e.target.value)} style={inputStyle} />
+                    </div>
+
+                    {sectionTitle('Stop Loss / Take Profit (ATR Multiplier)')}
+                    <div>
+                        <label style={labelStyle}>ATR × SL</label>
+                        <input type="number" step="0.1" value={local.atrMultiplierSL} onChange={e => set('atrMultiplierSL', e.target.value)} style={inputStyle} />
+                    </div>
+                    <div>
+                        <label style={labelStyle}>ATR × TP</label>
+                        <input type="number" step="0.1" value={local.atrMultiplierTP} onChange={e => set('atrMultiplierTP', e.target.value)} style={inputStyle} />
+                    </div>
+
+                    {sectionTitle('Session Filter')}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <input type="checkbox" id="chkSession" checked={local.useSessionFilter} onChange={e => set('useSessionFilter', e.target.checked)} />
+                        <label htmlFor="chkSession" style={{ fontSize: '0.9rem' }}>Ativar Filtro de Sessão</label>
+                    </div>
+                    <div>
+                        <label style={labelStyle}>Sessão</label>
+                        <select value={local.session} onChange={e => set('session', e.target.value)} style={inputStyle}>
+                            <option value="NY">New York</option>
+                            <option value="LONDON">London</option>
+                            <option value="ASIA">Asia</option>
+                        </select>
+                    </div>
+
+                    {sectionTitle('Position Sizing')}
+                    <div>
+                        <label style={labelStyle}>Alavancagem (Futures)</label>
+                        <input type="number" value={local.leverage} onChange={e => set('leverage', e.target.value)} style={inputStyle} />
+                    </div>
+                    <div>
+                        <label style={labelStyle}>Risco por Trade (%)</label>
+                        <input type="number" step="0.5" value={local.riskPerTrade} onChange={e => set('riskPerTrade', e.target.value)} style={inputStyle} />
+                    </div>
                 </div>
 
-                {/* ── Engine Mode ── */}
-                {sectionTitle(`Modo de Operação — ${modeLabel}`)}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <input type="checkbox" id="chkBreakout" checked={local.useBreakout} onChange={e => set('useBreakout', e.target.checked)} />
-                    <label htmlFor="chkBreakout" style={{ fontSize: '0.9rem' }}>Breakout</label>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <input type="checkbox" id="chkMR" checked={local.useMeanReversion} onChange={e => set('useMeanReversion', e.target.checked)} />
-                    <label htmlFor="chkMR" style={{ fontSize: '0.9rem' }}>Mean Reversion</label>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <input type="checkbox" id="chkCandle" checked={local.useCandleConfirmation} onChange={e => set('useCandleConfirmation', e.target.checked)} />
-                    <label htmlFor="chkCandle" style={{ fontSize: '0.9rem' }}>Candle Confirmation</label>
+                <div style={{ padding: '1rem', marginTop: '1.5rem', background: 'rgba(255, 179, 0, 0.05)', borderRadius: '8px', border: '1px solid rgba(255, 179, 0, 0.2)', display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <AlertTriangle color="#ffb300" size={24} />
+                    <div style={{ fontSize: '0.85rem', color: '#ffb300' }}>Alterar parâmetros afetará apenas novas ordens. Posições abertas continuarão com os stops originais.</div>
                 </div>
 
-                {/* ── Multi-EMA Trend Alignment ── */}
-                {sectionTitle('Multi-EMA Trend Alignment')}
-                <div>
-                    <label style={labelStyle}>EMA Fast</label>
-                    <input type="number" value={local.emaFast} onChange={e => set('emaFast', e.target.value)} style={inputStyle} />
-                </div>
-                <div>
-                    <label style={labelStyle}>EMA Slow</label>
-                    <input type="number" value={local.emaSlow} onChange={e => set('emaSlow', e.target.value)} style={inputStyle} />
-                </div>
-                <div>
-                    <label style={labelStyle}>EMA HTF</label>
-                    <input type="number" value={local.emaHTF} onChange={e => set('emaHTF', e.target.value)} style={inputStyle} />
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <input type="checkbox" id="chkHTF" checked={local.useEmaHTF} onChange={e => set('useEmaHTF', e.target.checked)} />
-                    <label htmlFor="chkHTF" style={{ fontSize: '0.9rem' }}>Usar EMA HTF Filter</label>
-                </div>
-
-                {/* ── RSI Settings ── */}
-                {sectionTitle('RSI (Pullback Filter)')}
-                <div>
-                    <label style={labelStyle}>RSI Período</label>
-                    <input type="number" value={local.rsiPeriod} onChange={e => set('rsiPeriod', e.target.value)} style={inputStyle} />
-                </div>
-                <div>
-                    <label style={labelStyle}>RSI Oversold</label>
-                    <input type="number" value={local.rsiOversold} onChange={e => set('rsiOversold', e.target.value)} style={inputStyle} />
-                </div>
-                <div>
-                    <label style={labelStyle}>RSI Overbought</label>
-                    <input type="number" value={local.rsiOverbought} onChange={e => set('rsiOverbought', e.target.value)} style={inputStyle} />
-                </div>
-
-                {/* ── ATR-based Risk (SL / TP) ── */}
-                {sectionTitle('Stop Loss / Take Profit (ATR Multiplier)')}
-                <div>
-                    <label style={labelStyle}>ATR × SL</label>
-                    <input type="number" step="0.1" value={local.atrMultiplierSL} onChange={e => set('atrMultiplierSL', e.target.value)} style={inputStyle} />
-                </div>
-                <div>
-                    <label style={labelStyle}>ATR × TP</label>
-                    <input type="number" step="0.1" value={local.atrMultiplierTP} onChange={e => set('atrMultiplierTP', e.target.value)} style={inputStyle} />
-                </div>
-
-                {/* ── Session Filter ── */}
-                {sectionTitle('Session Filter')}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <input type="checkbox" id="chkSession" checked={local.useSessionFilter} onChange={e => set('useSessionFilter', e.target.checked)} />
-                    <label htmlFor="chkSession" style={{ fontSize: '0.9rem' }}>Ativar Filtro de Sessão</label>
-                </div>
-                <div>
-                    <label style={labelStyle}>Sessão</label>
-                    <select value={local.session} onChange={e => set('session', e.target.value)} style={inputStyle}>
-                        <option value="NY">New York</option>
-                        <option value="LONDON">London</option>
-                        <option value="ASIA">Asia</option>
-                    </select>
-                </div>
-
-                {/* ── Position Sizing ── */}
-                {sectionTitle('Position Sizing')}
-                <div>
-                    <label style={labelStyle}>Alavancagem (Futures)</label>
-                    <input type="number" value={local.leverage} onChange={e => set('leverage', e.target.value)} style={inputStyle} />
-                </div>
-                <div>
-                    <label style={labelStyle}>Risco por Trade (%)</label>
-                    <input type="number" step="0.5" value={local.riskPerTrade} onChange={e => set('riskPerTrade', e.target.value)} style={inputStyle} />
+                <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                    <button onClick={handleSave} className="btn-primary" style={{ flex: 1, padding: '1rem', borderRadius: '12px', fontWeight: 700 }}>
+                        Aplicar ao Bot (Live)
+                    </button>
+                    <button onClick={() => setShowSaveModal(true)} style={{ flex: 1, padding: '1rem', borderRadius: '12px', fontWeight: 700, border: '1px solid rgba(96,239,255,0.4)', background: 'rgba(96,239,255,0.08)', color: '#60efff', cursor: 'pointer' }}>
+                        💾 Salvar como Estratégia
+                    </button>
                 </div>
             </div>
 
-            <div style={{ padding: '1rem', marginTop: '1.5rem', background: 'rgba(255, 179, 0, 0.05)', borderRadius: '8px', border: '1px solid rgba(255, 179, 0, 0.2)', display: 'flex', gap: '12px', alignItems: 'center' }}>
-                <AlertTriangle color="#ffb300" size={24} />
-                <div style={{ fontSize: '0.85rem', color: '#ffb300' }}>Alterar parâmetros afetará apenas novas ordens. Posições abertas continuarão com os stops originais.</div>
-            </div>
-
-            <button 
-              onClick={handleSave}
-              className="btn-primary" style={{ marginTop: '1rem', padding: '1rem', borderRadius: '12px', fontWeight: 700, width: '100%' }}
-            >
-                Aplicar Configurações
-            </button>
+            {/* ── SAVE MODAL ── */}
+            {showSaveModal && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}
+                     onClick={() => setShowSaveModal(false)}>
+                    <div style={{ background: '#1a1b1f', borderRadius: '16px', padding: '2rem', minWidth: '380px', border: '1px solid rgba(255,255,255,0.1)' }}
+                         onClick={e => e.stopPropagation()}>
+                        <h3 style={{ marginBottom: '1rem' }}>💾 Salvar Estratégia</h3>
+                        <label style={labelStyle}>Nome da Estratégia</label>
+                        <input type="text" value={saveName} onChange={e => setSaveName(e.target.value)} placeholder="ex: BTC Pullback Agressivo"
+                            maxLength={100}
+                            style={{ ...inputStyle, marginBottom: '1rem' }}
+                            onKeyDown={e => e.key === 'Enter' && handleSaveAsStrategy()} autoFocus />
+                        <div style={{ display: 'flex', gap: '0.75rem' }}>
+                            <button onClick={handleSaveAsStrategy} disabled={!saveName.trim()}
+                                style={{ flex: 1, padding: '0.75rem', borderRadius: '10px', border: 'none', background: saveName.trim() ? '#00ff87' : 'rgba(0,255,135,0.2)', color: '#000', fontWeight: 700, cursor: saveName.trim() ? 'pointer' : 'not-allowed' }}>
+                                Salvar
+                            </button>
+                            <button onClick={() => setShowSaveModal(false)}
+                                style={{ flex: 1, padding: '0.75rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#fff', fontWeight: 600, cursor: 'pointer' }}>
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
@@ -653,6 +853,9 @@ function BenchmarkView() {
     const [appliedMsg, setAppliedMsg] = useState(null);  // success message
     const [appliedIndex, setAppliedIndex] = useState(null); // row that was applied
     const [strategyLog, setStrategyLog] = useState([]);  // persistent log of applied strategies
+    // Save-as-strategy modal state
+    const [saveModal, setSaveModal] = useState(null); // { result, rowIndex }
+    const [bmSaveName, setBmSaveName] = useState('');
 
     useEffect(() => {
         fetch(`${API_URL}/benchmark/config`).then(r => r.json()).then(setBmConfig).catch(() => {});
@@ -681,18 +884,54 @@ function BenchmarkView() {
         finally { setRunning(false); }
     };
 
-    const applyStrategy = async (result, rowIndex) => {
+    // Open modal to name the strategy before applying
+    const promptApply = (result, rowIndex) => {
+        const defaultName = `${result.strategy}_${result.symbol}_${result.timeframe}_${result.regime}`;
+        setBmSaveName(defaultName);
+        setSaveModal({ result, rowIndex });
+    };
+
+    // Confirm: apply to live config + save as named strategy
+    const confirmApply = async () => {
+        if (!saveModal || !bmSaveName.trim()) return;
+        const { result, rowIndex } = saveModal;
         setApplying(rowIndex); setAppliedMsg(null);
         try {
+            // 1. Apply to live config
             const res = await fetch(`${API_URL}/benchmark/apply`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ params: result.params, symbol: result.symbol, timeframe: result.timeframe }),
             });
             if (!res.ok) { const e = await res.json(); throw new Error(e.details || e.error); }
+
+            // 2. Save as named strategy in DB
+            const saveRes = await fetch(`${API_URL}/strategies`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: bmSaveName.trim(),
+                    source: 'benchmark',
+                    params: result.params,
+                    symbol: result.symbol,
+                    timeframe: result.timeframe,
+                    is_active: true,
+                    benchmark_validated: true,
+                    benchmark_score: result.composite,
+                }),
+            });
+            if (!saveRes.ok) {
+                const e = await saveRes.json();
+                // If name conflict, still applied to live, just warn
+                setAppliedMsg(`⚠️ Aplicado ao bot, mas não salvo: ${e.error}`);
+            } else {
+                setAppliedMsg(`✅ "${bmSaveName.trim()}" salva e ativada! (${result.symbol} ${result.timeframe})`);
+            }
+
             setAppliedIndex(rowIndex);
             const logEntry = {
                 timestamp: new Date().toLocaleString(),
+                name: bmSaveName.trim(),
                 strategy: result.strategy,
                 symbol: result.symbol,
                 timeframe: result.timeframe,
@@ -702,10 +941,9 @@ function BenchmarkView() {
                 metrics: { winRate: result.metrics.winRate, profitFactor: result.metrics.profitFactor, totalPnl: result.metrics.totalPnl },
             };
             setStrategyLog(prev => [logEntry, ...prev]);
-            setAppliedMsg(`✅ Applied: ${result.strategy} (${result.symbol} ${result.timeframe}) → Demo Bot`);
             setTimeout(() => setAppliedMsg(null), 6000);
         } catch (e) { setError(`Apply failed: ${e.message}`); }
-        finally { setApplying(null); }
+        finally { setApplying(null); setSaveModal(null); setBmSaveName(''); }
     };
 
     const chipStyle = (active) => ({
@@ -839,11 +1077,11 @@ function BenchmarkView() {
                                         <td style={{ padding: '6px 10px', fontSize: '0.78rem' }}>{r.params.atrMultiplier}×/{r.params.tpMultiplier}×</td>
                                         <td style={{ padding: '6px 10px', fontSize: '0.78rem' }}>{r.params.session}</td>
                                         <td style={{ padding: '6px 10px' }}>
-                                            <button onClick={() => applyStrategy(r, i)} disabled={applying === i}
+                                            <button onClick={() => promptApply(r, i)} disabled={applying === i}
                                                 style={{ padding: '4px 12px', borderRadius: '6px', border: `1px solid ${isApplied ? '#00ff87' : 'rgba(0,255,135,0.4)'}`,
                                                     background: isApplied ? 'rgba(0,255,135,0.25)' : applying === i ? 'rgba(0,255,135,0.15)' : 'rgba(0,255,135,0.08)',
                                                     color: '#00ff87', fontSize: '0.75rem', fontWeight: 700, cursor: applying === i ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}>
-                                                {isApplied ? '✓ Active' : applying === i ? '⏳...' : '▶ Apply'}
+                                                {isApplied ? '✓ Saved' : applying === i ? '⏳...' : '💾 Save & Apply'}
                                             </button>
                                         </td>
                                     </tr>
@@ -880,7 +1118,7 @@ function BenchmarkView() {
             {strategyLog.length > 0 && (
                 <div className="glass-panel" style={{ padding: '1.5rem' }}>
                     <h4 style={{ marginBottom: '1rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Settings size={16} color="#00ff87" /> Estratégias Aplicadas
+                        <Settings size={16} color="#00ff87" /> Estratégias Salvas do Benchmark
                         <span style={{ fontSize: '0.75rem', opacity: 0.4, fontWeight: 400 }}>({strategyLog.length})</span>
                     </h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -893,7 +1131,7 @@ function BenchmarkView() {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                                         {i === 0 && <span style={{ color: '#00ff87', fontWeight: 700, fontSize: '0.78rem' }}>● ATIVA</span>}
-                                        <span style={{ fontWeight: 700, fontSize: '0.88rem' }}>{entry.strategy}</span>
+                                        <span style={{ fontWeight: 700, fontSize: '0.88rem' }}>{entry.name || entry.strategy}</span>
                                         <span style={{ color: regimeColor[entry.regime], fontSize: '0.78rem', fontWeight: 600 }}>{entry.regime}</span>
                                         <span style={{ opacity: 0.6, fontSize: '0.8rem' }}>{entry.symbol} {entry.timeframe}</span>
                                     </div>
@@ -911,6 +1149,35 @@ function BenchmarkView() {
                                 </div>
                             </div>
                         ))}
+                    </div>
+                </div>
+            )}
+
+            {/* ── BENCHMARK SAVE MODAL ── */}
+            {saveModal && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}
+                     onClick={() => setSaveModal(null)}>
+                    <div style={{ background: '#1a1b1f', borderRadius: '16px', padding: '2rem', minWidth: '400px', border: '1px solid rgba(255,255,255,0.1)' }}
+                         onClick={e => e.stopPropagation()}>
+                        <h3 style={{ marginBottom: '0.5rem' }}>💾 Salvar & Aplicar Estratégia</h3>
+                        <p style={{ fontSize: '0.82rem', opacity: 0.5, marginBottom: '1rem' }}>
+                            {saveModal.result.strategy} — {saveModal.result.symbol} {saveModal.result.timeframe} ({saveModal.result.regime})
+                        </p>
+                        <label style={{ fontSize: '0.85rem', opacity: 0.6, marginBottom: '6px', display: 'block' }}>Nome da Estratégia</label>
+                        <input type="text" value={bmSaveName} onChange={e => setBmSaveName(e.target.value)} placeholder="ex: BTC Bull Breakout 5m"
+                            maxLength={100}
+                            style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', padding: '0.8rem', borderRadius: '8px', color: '#fff', width: '100%', marginBottom: '1rem' }}
+                            onKeyDown={e => e.key === 'Enter' && confirmApply()} autoFocus />
+                        <div style={{ display: 'flex', gap: '0.75rem' }}>
+                            <button onClick={confirmApply} disabled={!bmSaveName.trim()}
+                                style={{ flex: 1, padding: '0.75rem', borderRadius: '10px', border: 'none', background: bmSaveName.trim() ? '#00ff87' : 'rgba(0,255,135,0.2)', color: '#000', fontWeight: 700, cursor: bmSaveName.trim() ? 'pointer' : 'not-allowed' }}>
+                                Salvar & Ativar
+                            </button>
+                            <button onClick={() => setSaveModal(null)}
+                                style={{ flex: 1, padding: '0.75rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#fff', fontWeight: 600, cursor: 'pointer' }}>
+                                Cancelar
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
@@ -1010,6 +1277,46 @@ function RiskStat({ label, value }) {
 }
 
 function BacktestView({ form, onFormChange, onRun, loading, result, error }) {
+    const [strategies, setStrategies] = useState([]);
+    const [selectedStratId, setSelectedStratId] = useState('');
+    const [btMsg, setBtMsg] = useState(null);
+
+    useEffect(() => {
+        fetch(`${API_URL}/strategies`).then(r => r.json()).then(data => {
+            if (Array.isArray(data)) setStrategies(data);
+        }).catch(() => {});
+    }, []);
+
+    const loadStrategyForBacktest = (id) => {
+        setSelectedStratId(id);
+        if (!id) return;
+        const strat = strategies.find(s => s.id === parseInt(id));
+        if (strat) {
+            onFormChange({ ...form, symbol: strat.symbol || form.symbol });
+        }
+    };
+
+    const markBacktestValidated = async () => {
+        if (!selectedStratId) return;
+        try {
+            const res = await fetch(`${API_URL}/strategies/${selectedStratId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ backtest_validated: true }),
+            });
+            if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Erro'); }
+            setBtMsg({ type: 'success', text: '✅ Estratégia marcada como validada no backtest!' });
+            setTimeout(() => setBtMsg(null), 4000);
+            // Refresh strategies list
+            fetch(`${API_URL}/strategies`).then(r => r.json()).then(data => {
+                if (Array.isArray(data)) setStrategies(data);
+            }).catch(() => {});
+        } catch (e) {
+            setBtMsg({ type: 'error', text: `❌ ${e.message}` });
+            setTimeout(() => setBtMsg(null), 4000);
+        }
+    };
+
     const equityData = result?.trades ? (() => {
         let balance = parseFloat(form.balance) || 1000;
         return result.trades.map((t, i) => {
@@ -1023,6 +1330,30 @@ function BacktestView({ form, onFormChange, onRun, loading, result, error }) {
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+            {btMsg && (
+                <div style={{ padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.9rem',
+                    background: btMsg.type === 'success' ? 'rgba(0,255,135,0.1)' : 'rgba(255,77,79,0.1)',
+                    border: `1px solid ${btMsg.type === 'success' ? 'rgba(0,255,135,0.3)' : 'rgba(255,77,79,0.3)'}`,
+                    color: btMsg.type === 'success' ? '#00ff87' : '#ff4d4f' }}>{btMsg.text}</div>
+            )}
+
+            {/* Strategy Selector */}
+            {strategies.length > 0 && (
+                <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                    <h4 style={{ marginBottom: '0.75rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Settings size={16} color="#60efff" /> Carregar Estratégia Salva
+                    </h4>
+                    <select value={selectedStratId} onChange={e => loadStrategyForBacktest(e.target.value)} style={{ ...inputStyle, maxWidth: '400px' }}>
+                        <option value="">— Selecionar estratégia —</option>
+                        {strategies.map(s => (
+                            <option key={s.id} value={s.id}>{s.name} ({s.symbol || '?'} {s.timeframe || '?'}) {s.is_active ? '● ATIVA' : ''}</option>
+                        ))}
+                    </select>
+                    <p style={{ fontSize: '0.78rem', opacity: 0.4, marginTop: '6px' }}>O backtest usará a estratégia carregada no config do bot. Selecionar aqui atualiza o símbolo automaticamente.</p>
+                </div>
+            )}
+
             {/* Form */}
             <div className="glass-panel" style={{ padding: '1.5rem' }}>
                 <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -1048,9 +1379,16 @@ function BacktestView({ form, onFormChange, onRun, loading, result, error }) {
                         <input type="number" value={form.balance} onChange={e => onFormChange({ ...form, balance: e.target.value })} style={inputStyle} />
                     </div>
                 </div>
-                <button onClick={onRun} disabled={loading} style={{ padding: '0.85rem 2rem', borderRadius: '10px', border: 'none', background: loading ? 'rgba(96,239,255,0.2)' : '#60efff', color: '#000', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontSize: '0.95rem' }}>
-                    {loading ? '⏳ Executando...' : '▶ Executar Backtest'}
-                </button>
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                    <button onClick={onRun} disabled={loading} style={{ padding: '0.85rem 2rem', borderRadius: '10px', border: 'none', background: loading ? 'rgba(96,239,255,0.2)' : '#60efff', color: '#000', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontSize: '0.95rem' }}>
+                        {loading ? '⏳ Executando...' : '▶ Executar Backtest'}
+                    </button>
+                    {selectedStratId && result && (
+                        <button onClick={markBacktestValidated} style={{ padding: '0.85rem 1.5rem', borderRadius: '10px', border: '1px solid rgba(0,255,135,0.4)', background: 'rgba(0,255,135,0.08)', color: '#00ff87', fontWeight: 700, cursor: 'pointer', fontSize: '0.9rem' }}>
+                            ✓ Marcar Estratégia como Validada
+                        </button>
+                    )}
+                </div>
                 {error && <div style={{ marginTop: '1rem', padding: '0.75rem 1rem', background: 'rgba(255,77,79,0.1)', border: '1px solid rgba(255,77,79,0.3)', borderRadius: '8px', color: '#ff4d4f', fontSize: '0.9rem' }}>❌ {error}</div>}
             </div>
 
