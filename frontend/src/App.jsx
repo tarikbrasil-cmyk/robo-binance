@@ -660,6 +660,8 @@ function BenchmarkView() {
     const [activeRegimeTab, setActiveRegimeTab] = useState('ALL');
     const [applying, setApplying]   = useState(null);   // index of row being applied
     const [appliedMsg, setAppliedMsg] = useState(null);  // success message
+    const [appliedIndex, setAppliedIndex] = useState(null); // row that was applied
+    const [strategyLog, setStrategyLog] = useState([]);  // persistent log of applied strategies
 
     useEffect(() => {
         fetch(`${API_URL}/benchmark/config`).then(r => r.json()).then(setBmConfig).catch(() => {});
@@ -697,6 +699,18 @@ function BenchmarkView() {
                 body: JSON.stringify({ params: result.params, symbol: result.symbol, timeframe: result.timeframe }),
             });
             if (!res.ok) { const e = await res.json(); throw new Error(e.details || e.error); }
+            setAppliedIndex(rowIndex);
+            const logEntry = {
+                timestamp: new Date().toLocaleString(),
+                strategy: result.strategy,
+                symbol: result.symbol,
+                timeframe: result.timeframe,
+                regime: result.regime,
+                score: result.composite,
+                params: { ...result.params },
+                metrics: { winRate: result.metrics.winRate, profitFactor: result.metrics.profitFactor, totalPnl: result.metrics.totalPnl },
+            };
+            setStrategyLog(prev => [logEntry, ...prev]);
             setAppliedMsg(`✅ Applied: ${result.strategy} (${result.symbol} ${result.timeframe}) → Demo Bot`);
             setTimeout(() => setAppliedMsg(null), 6000);
         } catch (e) { setError(`Apply failed: ${e.message}`); }
@@ -786,8 +800,8 @@ function BenchmarkView() {
 
             {/* Regime tabs + Results table */}
             {report && (
-                <div className="glass-panel" style={{ padding: '1.5rem' }}>
-                    <div style={{ display: 'flex', gap: '8px', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+                <div className="glass-panel" style={{ padding: '1rem 0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '1.5rem', flexWrap: 'wrap', padding: '0 1rem' }}>
                         <span style={chipStyle(activeRegimeTab === 'ALL')} onClick={() => setActiveRegimeTab('ALL')}>All (Top 50)</span>
                         {report.config?.regimes?.map(tag => (
                             <span key={tag} style={chipStyle(activeRegimeTab === tag)} onClick={() => setActiveRegimeTab(tag)}>
@@ -796,20 +810,28 @@ function BenchmarkView() {
                         ))}
                     </div>
 
-                    <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.82rem' }}>
+                    <div style={{ overflowX: 'auto', position: 'relative' }}>
+                        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, textAlign: 'left', fontSize: '0.82rem' }}>
                             <thead>
                                 <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', opacity: 0.55 }}>
-                                    {['#', 'Regime', 'Symbol', 'TF', 'Strategy', 'Win Rate', 'PF', 'Trades', 'Max DD', 'PnL', 'Score', 'EMA', 'RSI', 'ATR SL/TP', 'Session', ''].map(h => (
-                                        <th key={h} style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>{h}</th>
+                                    {['#', 'Regime', 'Symbol', 'TF', 'Strategy', 'Win Rate', 'PF', 'Trades', 'Max DD', 'PnL', 'Score', 'EMA', 'RSI', 'ATR SL/TP', 'Session', ''].map((h, ci) => (
+                                        <th key={h} style={{
+                                            padding: '8px 10px', whiteSpace: 'nowrap',
+                                            ...(ci === 0 ? { position: 'sticky', left: 0, zIndex: 2, background: '#0d0f17', minWidth: '36px' } : {}),
+                                            ...(ci === 1 ? { position: 'sticky', left: '36px', zIndex: 2, background: '#0d0f17', minWidth: '80px' } : {}),
+                                        }}>{h}</th>
                                     ))}
                                 </tr>
                             </thead>
                             <tbody>
-                                {displayResults.map((r, i) => (
-                                    <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                                        <td style={{ padding: '6px 10px', opacity: 0.4 }}>{i + 1}</td>
-                                        <td style={{ padding: '6px 10px' }}>
+                                {displayResults.map((r, i) => {
+                                    const isApplied = appliedIndex === i;
+                                    const rowBg = isApplied ? 'rgba(0,255,135,0.08)' : 'transparent';
+                                    const stickyBg = isApplied ? 'rgba(0,255,135,0.08)' : '#0d0f17';
+                                    return (
+                                    <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', background: rowBg }}>
+                                        <td style={{ padding: '6px 10px', opacity: 0.4, position: 'sticky', left: 0, zIndex: 1, background: stickyBg, minWidth: '36px' }}>{i + 1}</td>
+                                        <td style={{ padding: '6px 10px', position: 'sticky', left: '36px', zIndex: 1, background: stickyBg, minWidth: '80px' }}>
                                             <span style={{ color: regimeColor[r.regime], fontWeight: 700, fontSize: '0.78rem' }}>{r.regime}</span>
                                         </td>
                                         <td style={{ padding: '6px 10px', fontWeight: 600 }}>{r.symbol}</td>
@@ -827,14 +849,15 @@ function BenchmarkView() {
                                         <td style={{ padding: '6px 10px', fontSize: '0.78rem' }}>{r.params.session}</td>
                                         <td style={{ padding: '6px 10px' }}>
                                             <button onClick={() => applyStrategy(r, i)} disabled={applying === i}
-                                                style={{ padding: '4px 12px', borderRadius: '6px', border: '1px solid rgba(0,255,135,0.4)',
-                                                    background: applying === i ? 'rgba(0,255,135,0.15)' : 'rgba(0,255,135,0.08)',
+                                                style={{ padding: '4px 12px', borderRadius: '6px', border: `1px solid ${isApplied ? '#00ff87' : 'rgba(0,255,135,0.4)'}`,
+                                                    background: isApplied ? 'rgba(0,255,135,0.25)' : applying === i ? 'rgba(0,255,135,0.15)' : 'rgba(0,255,135,0.08)',
                                                     color: '#00ff87', fontSize: '0.75rem', fontWeight: 700, cursor: applying === i ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' }}>
-                                                {applying === i ? '⏳...' : '▶ Apply'}
+                                                {isApplied ? '✓ Active' : applying === i ? '⏳...' : '▶ Apply'}
                                             </button>
                                         </td>
                                     </tr>
-                                ))}
+                                    );
+                                })}
                             </tbody>
                         </table>
                         {displayResults.length === 0 && (
@@ -856,6 +879,45 @@ function BenchmarkView() {
                                 color: v.ok ? '#00ff87' : '#ff4d4f' }}>
                                 {v.ok ? '✓' : '⚠'} {v.symbol} {v.timeframe} — {v.candles?.toLocaleString()} candles
                                 {v.gaps > 0 && ` | ${v.gaps} gaps`}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Strategy Application Log */}
+            {strategyLog.length > 0 && (
+                <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                    <h4 style={{ marginBottom: '1rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Settings size={16} color="#00ff87" /> Estratégias Aplicadas
+                        <span style={{ fontSize: '0.75rem', opacity: 0.4, fontWeight: 400 }}>({strategyLog.length})</span>
+                    </h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        {strategyLog.map((entry, i) => (
+                            <div key={i} style={{
+                                padding: '0.85rem 1rem', borderRadius: '10px',
+                                background: i === 0 ? 'rgba(0,255,135,0.06)' : 'rgba(255,255,255,0.02)',
+                                border: `1px solid ${i === 0 ? 'rgba(0,255,135,0.25)' : 'rgba(255,255,255,0.06)'}`,
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                        {i === 0 && <span style={{ color: '#00ff87', fontWeight: 700, fontSize: '0.78rem' }}>● ATIVA</span>}
+                                        <span style={{ fontWeight: 700, fontSize: '0.88rem' }}>{entry.strategy}</span>
+                                        <span style={{ color: regimeColor[entry.regime], fontSize: '0.78rem', fontWeight: 600 }}>{entry.regime}</span>
+                                        <span style={{ opacity: 0.6, fontSize: '0.8rem' }}>{entry.symbol} {entry.timeframe}</span>
+                                    </div>
+                                    <span style={{ fontSize: '0.75rem', opacity: 0.4 }}>{entry.timestamp}</span>
+                                </div>
+                                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', fontSize: '0.78rem', opacity: 0.65 }}>
+                                    <span>Score: <b style={{ color: '#60efff' }}>{entry.score.toFixed(3)}</b></span>
+                                    <span>WR: <b>{entry.metrics.winRate.toFixed(1)}%</b></span>
+                                    <span>PF: <b>{entry.metrics.profitFactor.toFixed(2)}</b></span>
+                                    <span>PnL: <b style={{ color: entry.metrics.totalPnl >= 0 ? '#00ff87' : '#ff4d4f' }}>${entry.metrics.totalPnl.toFixed(0)}</b></span>
+                                    <span>EMA: {entry.params.emaFastPeriod}/{entry.params.emaSlowPeriod}</span>
+                                    <span>RSI: {entry.params.rsiOversold}/{entry.params.rsiOverbought}</span>
+                                    <span>ATR: {entry.params.atrMultiplier}×/{entry.params.tpMultiplier}×</span>
+                                    <span>Session: {entry.params.session}</span>
+                                </div>
                             </div>
                         ))}
                     </div>

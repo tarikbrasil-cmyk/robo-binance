@@ -1,0 +1,3050 @@
+[
+  {
+    "timestamp": "2026-04-01T19:11:05.885Z",
+    "config": {
+      "symbols": [
+        "BTCUSDT",
+        "ETHUSDT"
+      ],
+      "timeframes": [
+        "5m"
+      ],
+      "regimes": [
+        "BULL",
+        "BEAR",
+        "SIDEWAYS"
+      ],
+      "gridSize": 256
+    },
+    "totalRuns": 1536,
+    "qualified": 1536,
+    "top50": [
+      {
+        "regime": "BULL",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 65,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 100,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": false,
+          "useMeanReversion": false,
+          "session": "LONDON",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_PULLBACK",
+        "metrics": {
+          "tradesCount": 11,
+          "winRate": 72.72727272727273,
+          "profitFactor": 5.333333333333333,
+          "totalPnl": 39.607300693861816,
+          "maxDrawdown": 0.30000000000000293,
+          "finalBalance": 1039.6073006938618
+        },
+        "composite": 0.6630363636363635
+      },
+      {
+        "regime": "BULL",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 65,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 200,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": false,
+          "useMeanReversion": false,
+          "session": "LONDON",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_PULLBACK",
+        "metrics": {
+          "tradesCount": 11,
+          "winRate": 72.72727272727273,
+          "profitFactor": 5.333333333333333,
+          "totalPnl": 39.607300693861816,
+          "maxDrawdown": 0.30000000000000293,
+          "finalBalance": 1039.6073006938618
+        },
+        "composite": 0.6630363636363635
+      },
+      {
+        "regime": "BULL",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 65,
+          "emaFastPeriod": 50,
+          "emaSlowPeriod": 100,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": false,
+          "useMeanReversion": false,
+          "session": "LONDON",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_PULLBACK",
+        "metrics": {
+          "tradesCount": 11,
+          "winRate": 72.72727272727273,
+          "profitFactor": 5.333333333333333,
+          "totalPnl": 39.607300693861816,
+          "maxDrawdown": 0.30000000000000293,
+          "finalBalance": 1039.6073006938618
+        },
+        "composite": 0.6630363636363635
+      },
+      {
+        "regime": "BULL",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 65,
+          "emaFastPeriod": 50,
+          "emaSlowPeriod": 200,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": false,
+          "useMeanReversion": false,
+          "session": "LONDON",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_PULLBACK",
+        "metrics": {
+          "tradesCount": 11,
+          "winRate": 72.72727272727273,
+          "profitFactor": 5.333333333333333,
+          "totalPnl": 39.607300693861816,
+          "maxDrawdown": 0.30000000000000293,
+          "finalBalance": 1039.6073006938618
+        },
+        "composite": 0.6630363636363635
+      },
+      {
+        "regime": "BEAR",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 65,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 100,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": false,
+          "useMeanReversion": false,
+          "session": "LONDON",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_PULLBACK",
+        "metrics": {
+          "tradesCount": 11,
+          "winRate": 72.72727272727273,
+          "profitFactor": 5.333333333333333,
+          "totalPnl": 39.607300693861816,
+          "maxDrawdown": 0.30000000000000293,
+          "finalBalance": 1039.6073006938618
+        },
+        "composite": 0.6630363636363635
+      },
+      {
+        "regime": "BEAR",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 65,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 200,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": false,
+          "useMeanReversion": false,
+          "session": "LONDON",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_PULLBACK",
+        "metrics": {
+          "tradesCount": 11,
+          "winRate": 72.72727272727273,
+          "profitFactor": 5.333333333333333,
+          "totalPnl": 39.607300693861816,
+          "maxDrawdown": 0.30000000000000293,
+          "finalBalance": 1039.6073006938618
+        },
+        "composite": 0.6630363636363635
+      },
+      {
+        "regime": "BEAR",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 65,
+          "emaFastPeriod": 50,
+          "emaSlowPeriod": 100,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": false,
+          "useMeanReversion": false,
+          "session": "LONDON",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_PULLBACK",
+        "metrics": {
+          "tradesCount": 11,
+          "winRate": 72.72727272727273,
+          "profitFactor": 5.333333333333333,
+          "totalPnl": 39.607300693861816,
+          "maxDrawdown": 0.30000000000000293,
+          "finalBalance": 1039.6073006938618
+        },
+        "composite": 0.6630363636363635
+      },
+      {
+        "regime": "BEAR",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 65,
+          "emaFastPeriod": 50,
+          "emaSlowPeriod": 200,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": false,
+          "useMeanReversion": false,
+          "session": "LONDON",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_PULLBACK",
+        "metrics": {
+          "tradesCount": 11,
+          "winRate": 72.72727272727273,
+          "profitFactor": 5.333333333333333,
+          "totalPnl": 39.607300693861816,
+          "maxDrawdown": 0.30000000000000293,
+          "finalBalance": 1039.6073006938618
+        },
+        "composite": 0.6630363636363635
+      },
+      {
+        "regime": "SIDEWAYS",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 65,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 100,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": false,
+          "useMeanReversion": false,
+          "session": "LONDON",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_PULLBACK",
+        "metrics": {
+          "tradesCount": 11,
+          "winRate": 72.72727272727273,
+          "profitFactor": 5.333333333333333,
+          "totalPnl": 39.607300693861816,
+          "maxDrawdown": 0.30000000000000293,
+          "finalBalance": 1039.6073006938618
+        },
+        "composite": 0.6630363636363635
+      },
+      {
+        "regime": "SIDEWAYS",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 65,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 200,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": false,
+          "useMeanReversion": false,
+          "session": "LONDON",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_PULLBACK",
+        "metrics": {
+          "tradesCount": 11,
+          "winRate": 72.72727272727273,
+          "profitFactor": 5.333333333333333,
+          "totalPnl": 39.607300693861816,
+          "maxDrawdown": 0.30000000000000293,
+          "finalBalance": 1039.6073006938618
+        },
+        "composite": 0.6630363636363635
+      },
+      {
+        "regime": "SIDEWAYS",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 65,
+          "emaFastPeriod": 50,
+          "emaSlowPeriod": 100,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": false,
+          "useMeanReversion": false,
+          "session": "LONDON",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_PULLBACK",
+        "metrics": {
+          "tradesCount": 11,
+          "winRate": 72.72727272727273,
+          "profitFactor": 5.333333333333333,
+          "totalPnl": 39.607300693861816,
+          "maxDrawdown": 0.30000000000000293,
+          "finalBalance": 1039.6073006938618
+        },
+        "composite": 0.6630363636363635
+      },
+      {
+        "regime": "SIDEWAYS",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 65,
+          "emaFastPeriod": 50,
+          "emaSlowPeriod": 200,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": false,
+          "useMeanReversion": false,
+          "session": "LONDON",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_PULLBACK",
+        "metrics": {
+          "tradesCount": 11,
+          "winRate": 72.72727272727273,
+          "profitFactor": 5.333333333333333,
+          "totalPnl": 39.607300693861816,
+          "maxDrawdown": 0.30000000000000293,
+          "finalBalance": 1039.6073006938618
+        },
+        "composite": 0.6630363636363635
+      },
+      {
+        "regime": "BULL",
+        "symbol": "BTCUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 55,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 100,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": false,
+          "useMeanReversion": false,
+          "session": "LONDON",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_PULLBACK",
+        "metrics": {
+          "tradesCount": 798,
+          "winRate": 72.4310776942356,
+          "profitFactor": 5.254545454545416,
+          "totalPnl": 15389.5747243695,
+          "maxDrawdown": 1.1972732019176213,
+          "finalBalance": 16389.5747243695
+        },
+        "composite": 0.6597608420673426
+      },
+      {
+        "regime": "BULL",
+        "symbol": "BTCUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 55,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 200,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": false,
+          "useMeanReversion": false,
+          "session": "LONDON",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_PULLBACK",
+        "metrics": {
+          "tradesCount": 798,
+          "winRate": 72.4310776942356,
+          "profitFactor": 5.254545454545416,
+          "totalPnl": 15389.5747243695,
+          "maxDrawdown": 1.1972732019176213,
+          "finalBalance": 16389.5747243695
+        },
+        "composite": 0.6597608420673426
+      },
+      {
+        "regime": "BULL",
+        "symbol": "BTCUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 55,
+          "emaFastPeriod": 50,
+          "emaSlowPeriod": 100,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": false,
+          "useMeanReversion": false,
+          "session": "LONDON",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_PULLBACK",
+        "metrics": {
+          "tradesCount": 798,
+          "winRate": 72.4310776942356,
+          "profitFactor": 5.254545454545416,
+          "totalPnl": 15389.5747243695,
+          "maxDrawdown": 1.1972732019176213,
+          "finalBalance": 16389.5747243695
+        },
+        "composite": 0.6597608420673426
+      },
+      {
+        "regime": "BULL",
+        "symbol": "BTCUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 55,
+          "emaFastPeriod": 50,
+          "emaSlowPeriod": 200,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": false,
+          "useMeanReversion": false,
+          "session": "LONDON",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_PULLBACK",
+        "metrics": {
+          "tradesCount": 798,
+          "winRate": 72.4310776942356,
+          "profitFactor": 5.254545454545416,
+          "totalPnl": 15389.5747243695,
+          "maxDrawdown": 1.1972732019176213,
+          "finalBalance": 16389.5747243695
+        },
+        "composite": 0.6597608420673426
+      },
+      {
+        "regime": "BEAR",
+        "symbol": "BTCUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 55,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 100,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": false,
+          "useMeanReversion": false,
+          "session": "LONDON",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_PULLBACK",
+        "metrics": {
+          "tradesCount": 798,
+          "winRate": 72.4310776942356,
+          "profitFactor": 5.254545454545416,
+          "totalPnl": 15389.5747243695,
+          "maxDrawdown": 1.1972732019176213,
+          "finalBalance": 16389.5747243695
+        },
+        "composite": 0.6597608420673426
+      },
+      {
+        "regime": "BEAR",
+        "symbol": "BTCUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 55,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 200,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": false,
+          "useMeanReversion": false,
+          "session": "LONDON",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_PULLBACK",
+        "metrics": {
+          "tradesCount": 798,
+          "winRate": 72.4310776942356,
+          "profitFactor": 5.254545454545416,
+          "totalPnl": 15389.5747243695,
+          "maxDrawdown": 1.1972732019176213,
+          "finalBalance": 16389.5747243695
+        },
+        "composite": 0.6597608420673426
+      },
+      {
+        "regime": "BEAR",
+        "symbol": "BTCUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 55,
+          "emaFastPeriod": 50,
+          "emaSlowPeriod": 100,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": false,
+          "useMeanReversion": false,
+          "session": "LONDON",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_PULLBACK",
+        "metrics": {
+          "tradesCount": 798,
+          "winRate": 72.4310776942356,
+          "profitFactor": 5.254545454545416,
+          "totalPnl": 15389.5747243695,
+          "maxDrawdown": 1.1972732019176213,
+          "finalBalance": 16389.5747243695
+        },
+        "composite": 0.6597608420673426
+      },
+      {
+        "regime": "BEAR",
+        "symbol": "BTCUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 55,
+          "emaFastPeriod": 50,
+          "emaSlowPeriod": 200,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": false,
+          "useMeanReversion": false,
+          "session": "LONDON",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_PULLBACK",
+        "metrics": {
+          "tradesCount": 798,
+          "winRate": 72.4310776942356,
+          "profitFactor": 5.254545454545416,
+          "totalPnl": 15389.5747243695,
+          "maxDrawdown": 1.1972732019176213,
+          "finalBalance": 16389.5747243695
+        },
+        "composite": 0.6597608420673426
+      },
+      {
+        "regime": "SIDEWAYS",
+        "symbol": "BTCUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 55,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 100,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": false,
+          "useMeanReversion": false,
+          "session": "LONDON",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_PULLBACK",
+        "metrics": {
+          "tradesCount": 798,
+          "winRate": 72.4310776942356,
+          "profitFactor": 5.254545454545416,
+          "totalPnl": 15389.5747243695,
+          "maxDrawdown": 1.1972732019176213,
+          "finalBalance": 16389.5747243695
+        },
+        "composite": 0.6597608420673426
+      },
+      {
+        "regime": "SIDEWAYS",
+        "symbol": "BTCUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 55,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 200,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": false,
+          "useMeanReversion": false,
+          "session": "LONDON",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_PULLBACK",
+        "metrics": {
+          "tradesCount": 798,
+          "winRate": 72.4310776942356,
+          "profitFactor": 5.254545454545416,
+          "totalPnl": 15389.5747243695,
+          "maxDrawdown": 1.1972732019176213,
+          "finalBalance": 16389.5747243695
+        },
+        "composite": 0.6597608420673426
+      },
+      {
+        "regime": "SIDEWAYS",
+        "symbol": "BTCUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 55,
+          "emaFastPeriod": 50,
+          "emaSlowPeriod": 100,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": false,
+          "useMeanReversion": false,
+          "session": "LONDON",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_PULLBACK",
+        "metrics": {
+          "tradesCount": 798,
+          "winRate": 72.4310776942356,
+          "profitFactor": 5.254545454545416,
+          "totalPnl": 15389.5747243695,
+          "maxDrawdown": 1.1972732019176213,
+          "finalBalance": 16389.5747243695
+        },
+        "composite": 0.6597608420673426
+      },
+      {
+        "regime": "SIDEWAYS",
+        "symbol": "BTCUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 55,
+          "emaFastPeriod": 50,
+          "emaSlowPeriod": 200,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": false,
+          "useMeanReversion": false,
+          "session": "LONDON",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_PULLBACK",
+        "metrics": {
+          "tradesCount": 798,
+          "winRate": 72.4310776942356,
+          "profitFactor": 5.254545454545416,
+          "totalPnl": 15389.5747243695,
+          "maxDrawdown": 1.1972732019176213,
+          "finalBalance": 16389.5747243695
+        },
+        "composite": 0.6597608420673426
+      },
+      {
+        "regime": "BULL",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 55,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 100,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": true,
+          "useMeanReversion": false,
+          "session": "NY",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_BREAKOUT",
+        "metrics": {
+          "tradesCount": 1826,
+          "winRate": 72.34392113910187,
+          "profitFactor": 5.231683168316975,
+          "totalPnl": 591908.2295541874,
+          "maxDrawdown": 1.1946107919000142,
+          "finalBalance": 592908.2295541874
+        },
+        "composite": 0.6593303841117092
+      },
+      {
+        "regime": "BULL",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 55,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 200,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": true,
+          "useMeanReversion": false,
+          "session": "NY",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_BREAKOUT",
+        "metrics": {
+          "tradesCount": 1826,
+          "winRate": 72.34392113910187,
+          "profitFactor": 5.231683168316975,
+          "totalPnl": 591908.2295541874,
+          "maxDrawdown": 1.1946107919000142,
+          "finalBalance": 592908.2295541874
+        },
+        "composite": 0.6593303841117092
+      },
+      {
+        "regime": "BULL",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 55,
+          "emaFastPeriod": 50,
+          "emaSlowPeriod": 100,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": true,
+          "useMeanReversion": false,
+          "session": "NY",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_BREAKOUT",
+        "metrics": {
+          "tradesCount": 1826,
+          "winRate": 72.34392113910187,
+          "profitFactor": 5.231683168316975,
+          "totalPnl": 591908.2295541874,
+          "maxDrawdown": 1.1946107919000142,
+          "finalBalance": 592908.2295541874
+        },
+        "composite": 0.6593303841117092
+      },
+      {
+        "regime": "BULL",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 55,
+          "emaFastPeriod": 50,
+          "emaSlowPeriod": 200,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": true,
+          "useMeanReversion": false,
+          "session": "NY",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_BREAKOUT",
+        "metrics": {
+          "tradesCount": 1826,
+          "winRate": 72.34392113910187,
+          "profitFactor": 5.231683168316975,
+          "totalPnl": 591908.2295541874,
+          "maxDrawdown": 1.1946107919000142,
+          "finalBalance": 592908.2295541874
+        },
+        "composite": 0.6593303841117092
+      },
+      {
+        "regime": "BULL",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 65,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 100,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": true,
+          "useMeanReversion": false,
+          "session": "NY",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_BREAKOUT",
+        "metrics": {
+          "tradesCount": 1826,
+          "winRate": 72.34392113910187,
+          "profitFactor": 5.231683168316975,
+          "totalPnl": 591908.2295541874,
+          "maxDrawdown": 1.1946107919000142,
+          "finalBalance": 592908.2295541874
+        },
+        "composite": 0.6593303841117092
+      },
+      {
+        "regime": "BULL",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 65,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 200,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": true,
+          "useMeanReversion": false,
+          "session": "NY",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_BREAKOUT",
+        "metrics": {
+          "tradesCount": 1826,
+          "winRate": 72.34392113910187,
+          "profitFactor": 5.231683168316975,
+          "totalPnl": 591908.2295541874,
+          "maxDrawdown": 1.1946107919000142,
+          "finalBalance": 592908.2295541874
+        },
+        "composite": 0.6593303841117092
+      },
+      {
+        "regime": "BULL",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 65,
+          "emaFastPeriod": 50,
+          "emaSlowPeriod": 100,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": true,
+          "useMeanReversion": false,
+          "session": "NY",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_BREAKOUT",
+        "metrics": {
+          "tradesCount": 1826,
+          "winRate": 72.34392113910187,
+          "profitFactor": 5.231683168316975,
+          "totalPnl": 591908.2295541874,
+          "maxDrawdown": 1.1946107919000142,
+          "finalBalance": 592908.2295541874
+        },
+        "composite": 0.6593303841117092
+      },
+      {
+        "regime": "BULL",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 65,
+          "emaFastPeriod": 50,
+          "emaSlowPeriod": 200,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": true,
+          "useMeanReversion": false,
+          "session": "NY",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_BREAKOUT",
+        "metrics": {
+          "tradesCount": 1826,
+          "winRate": 72.34392113910187,
+          "profitFactor": 5.231683168316975,
+          "totalPnl": 591908.2295541874,
+          "maxDrawdown": 1.1946107919000142,
+          "finalBalance": 592908.2295541874
+        },
+        "composite": 0.6593303841117092
+      },
+      {
+        "regime": "BULL",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 45,
+          "rsiOverbought": 55,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 100,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": true,
+          "useMeanReversion": false,
+          "session": "NY",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_BREAKOUT",
+        "metrics": {
+          "tradesCount": 1826,
+          "winRate": 72.34392113910187,
+          "profitFactor": 5.231683168316975,
+          "totalPnl": 591908.2295541874,
+          "maxDrawdown": 1.1946107919000142,
+          "finalBalance": 592908.2295541874
+        },
+        "composite": 0.6593303841117092
+      },
+      {
+        "regime": "BULL",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 45,
+          "rsiOverbought": 55,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 200,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": true,
+          "useMeanReversion": false,
+          "session": "NY",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_BREAKOUT",
+        "metrics": {
+          "tradesCount": 1826,
+          "winRate": 72.34392113910187,
+          "profitFactor": 5.231683168316975,
+          "totalPnl": 591908.2295541874,
+          "maxDrawdown": 1.1946107919000142,
+          "finalBalance": 592908.2295541874
+        },
+        "composite": 0.6593303841117092
+      },
+      {
+        "regime": "BULL",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 45,
+          "rsiOverbought": 55,
+          "emaFastPeriod": 50,
+          "emaSlowPeriod": 100,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": true,
+          "useMeanReversion": false,
+          "session": "NY",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_BREAKOUT",
+        "metrics": {
+          "tradesCount": 1826,
+          "winRate": 72.34392113910187,
+          "profitFactor": 5.231683168316975,
+          "totalPnl": 591908.2295541874,
+          "maxDrawdown": 1.1946107919000142,
+          "finalBalance": 592908.2295541874
+        },
+        "composite": 0.6593303841117092
+      },
+      {
+        "regime": "BULL",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 45,
+          "rsiOverbought": 55,
+          "emaFastPeriod": 50,
+          "emaSlowPeriod": 200,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": true,
+          "useMeanReversion": false,
+          "session": "NY",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_BREAKOUT",
+        "metrics": {
+          "tradesCount": 1826,
+          "winRate": 72.34392113910187,
+          "profitFactor": 5.231683168316975,
+          "totalPnl": 591908.2295541874,
+          "maxDrawdown": 1.1946107919000142,
+          "finalBalance": 592908.2295541874
+        },
+        "composite": 0.6593303841117092
+      },
+      {
+        "regime": "BULL",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 45,
+          "rsiOverbought": 65,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 100,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": true,
+          "useMeanReversion": false,
+          "session": "NY",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_BREAKOUT",
+        "metrics": {
+          "tradesCount": 1826,
+          "winRate": 72.34392113910187,
+          "profitFactor": 5.231683168316975,
+          "totalPnl": 591908.2295541874,
+          "maxDrawdown": 1.1946107919000142,
+          "finalBalance": 592908.2295541874
+        },
+        "composite": 0.6593303841117092
+      },
+      {
+        "regime": "BULL",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 45,
+          "rsiOverbought": 65,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 200,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": true,
+          "useMeanReversion": false,
+          "session": "NY",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_BREAKOUT",
+        "metrics": {
+          "tradesCount": 1826,
+          "winRate": 72.34392113910187,
+          "profitFactor": 5.231683168316975,
+          "totalPnl": 591908.2295541874,
+          "maxDrawdown": 1.1946107919000142,
+          "finalBalance": 592908.2295541874
+        },
+        "composite": 0.6593303841117092
+      },
+      {
+        "regime": "BULL",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 45,
+          "rsiOverbought": 65,
+          "emaFastPeriod": 50,
+          "emaSlowPeriod": 100,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": true,
+          "useMeanReversion": false,
+          "session": "NY",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_BREAKOUT",
+        "metrics": {
+          "tradesCount": 1826,
+          "winRate": 72.34392113910187,
+          "profitFactor": 5.231683168316975,
+          "totalPnl": 591908.2295541874,
+          "maxDrawdown": 1.1946107919000142,
+          "finalBalance": 592908.2295541874
+        },
+        "composite": 0.6593303841117092
+      },
+      {
+        "regime": "BULL",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 45,
+          "rsiOverbought": 65,
+          "emaFastPeriod": 50,
+          "emaSlowPeriod": 200,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": true,
+          "useMeanReversion": false,
+          "session": "NY",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_BREAKOUT",
+        "metrics": {
+          "tradesCount": 1826,
+          "winRate": 72.34392113910187,
+          "profitFactor": 5.231683168316975,
+          "totalPnl": 591908.2295541874,
+          "maxDrawdown": 1.1946107919000142,
+          "finalBalance": 592908.2295541874
+        },
+        "composite": 0.6593303841117092
+      },
+      {
+        "regime": "BEAR",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 55,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 100,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": true,
+          "useMeanReversion": false,
+          "session": "NY",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_BREAKOUT",
+        "metrics": {
+          "tradesCount": 1826,
+          "winRate": 72.34392113910187,
+          "profitFactor": 5.231683168316975,
+          "totalPnl": 591908.2295541874,
+          "maxDrawdown": 1.1946107919000142,
+          "finalBalance": 592908.2295541874
+        },
+        "composite": 0.6593303841117092
+      },
+      {
+        "regime": "BEAR",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 55,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 200,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": true,
+          "useMeanReversion": false,
+          "session": "NY",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_BREAKOUT",
+        "metrics": {
+          "tradesCount": 1826,
+          "winRate": 72.34392113910187,
+          "profitFactor": 5.231683168316975,
+          "totalPnl": 591908.2295541874,
+          "maxDrawdown": 1.1946107919000142,
+          "finalBalance": 592908.2295541874
+        },
+        "composite": 0.6593303841117092
+      },
+      {
+        "regime": "BEAR",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 55,
+          "emaFastPeriod": 50,
+          "emaSlowPeriod": 100,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": true,
+          "useMeanReversion": false,
+          "session": "NY",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_BREAKOUT",
+        "metrics": {
+          "tradesCount": 1826,
+          "winRate": 72.34392113910187,
+          "profitFactor": 5.231683168316975,
+          "totalPnl": 591908.2295541874,
+          "maxDrawdown": 1.1946107919000142,
+          "finalBalance": 592908.2295541874
+        },
+        "composite": 0.6593303841117092
+      },
+      {
+        "regime": "BEAR",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 55,
+          "emaFastPeriod": 50,
+          "emaSlowPeriod": 200,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": true,
+          "useMeanReversion": false,
+          "session": "NY",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_BREAKOUT",
+        "metrics": {
+          "tradesCount": 1826,
+          "winRate": 72.34392113910187,
+          "profitFactor": 5.231683168316975,
+          "totalPnl": 591908.2295541874,
+          "maxDrawdown": 1.1946107919000142,
+          "finalBalance": 592908.2295541874
+        },
+        "composite": 0.6593303841117092
+      },
+      {
+        "regime": "BEAR",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 65,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 100,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": true,
+          "useMeanReversion": false,
+          "session": "NY",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_BREAKOUT",
+        "metrics": {
+          "tradesCount": 1826,
+          "winRate": 72.34392113910187,
+          "profitFactor": 5.231683168316975,
+          "totalPnl": 591908.2295541874,
+          "maxDrawdown": 1.1946107919000142,
+          "finalBalance": 592908.2295541874
+        },
+        "composite": 0.6593303841117092
+      },
+      {
+        "regime": "BEAR",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 65,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 200,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": true,
+          "useMeanReversion": false,
+          "session": "NY",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_BREAKOUT",
+        "metrics": {
+          "tradesCount": 1826,
+          "winRate": 72.34392113910187,
+          "profitFactor": 5.231683168316975,
+          "totalPnl": 591908.2295541874,
+          "maxDrawdown": 1.1946107919000142,
+          "finalBalance": 592908.2295541874
+        },
+        "composite": 0.6593303841117092
+      },
+      {
+        "regime": "BEAR",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 65,
+          "emaFastPeriod": 50,
+          "emaSlowPeriod": 100,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": true,
+          "useMeanReversion": false,
+          "session": "NY",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_BREAKOUT",
+        "metrics": {
+          "tradesCount": 1826,
+          "winRate": 72.34392113910187,
+          "profitFactor": 5.231683168316975,
+          "totalPnl": 591908.2295541874,
+          "maxDrawdown": 1.1946107919000142,
+          "finalBalance": 592908.2295541874
+        },
+        "composite": 0.6593303841117092
+      },
+      {
+        "regime": "BEAR",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 35,
+          "rsiOverbought": 65,
+          "emaFastPeriod": 50,
+          "emaSlowPeriod": 200,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": true,
+          "useMeanReversion": false,
+          "session": "NY",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_BREAKOUT",
+        "metrics": {
+          "tradesCount": 1826,
+          "winRate": 72.34392113910187,
+          "profitFactor": 5.231683168316975,
+          "totalPnl": 591908.2295541874,
+          "maxDrawdown": 1.1946107919000142,
+          "finalBalance": 592908.2295541874
+        },
+        "composite": 0.6593303841117092
+      },
+      {
+        "regime": "BEAR",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 45,
+          "rsiOverbought": 55,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 100,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": true,
+          "useMeanReversion": false,
+          "session": "NY",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_BREAKOUT",
+        "metrics": {
+          "tradesCount": 1826,
+          "winRate": 72.34392113910187,
+          "profitFactor": 5.231683168316975,
+          "totalPnl": 591908.2295541874,
+          "maxDrawdown": 1.1946107919000142,
+          "finalBalance": 592908.2295541874
+        },
+        "composite": 0.6593303841117092
+      },
+      {
+        "regime": "BEAR",
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "params": {
+          "rsiOversold": 45,
+          "rsiOverbought": 55,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 200,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
+          "useBreakout": true,
+          "useMeanReversion": false,
+          "session": "NY",
+          "useSessionFilter": true
+        },
+        "strategy": "MODULAR_V6_BREAKOUT",
+        "metrics": {
+          "tradesCount": 1826,
+          "winRate": 72.34392113910187,
+          "profitFactor": 5.231683168316975,
+          "totalPnl": 591908.2295541874,
+          "maxDrawdown": 1.1946107919000142,
+          "finalBalance": 592908.2295541874
+        },
+        "composite": 0.6593303841117092
+      }
+    ],
+    "byRegime": {
+      "BULL": [
+        {
+          "regime": "BULL",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 65,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": false,
+            "useMeanReversion": false,
+            "session": "LONDON",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_PULLBACK",
+          "metrics": {
+            "tradesCount": 11,
+            "winRate": 72.72727272727273,
+            "profitFactor": 5.333333333333333,
+            "totalPnl": 39.607300693861816,
+            "maxDrawdown": 0.30000000000000293,
+            "finalBalance": 1039.6073006938618
+          },
+          "composite": 0.6630363636363635
+        },
+        {
+          "regime": "BULL",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 65,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": false,
+            "useMeanReversion": false,
+            "session": "LONDON",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_PULLBACK",
+          "metrics": {
+            "tradesCount": 11,
+            "winRate": 72.72727272727273,
+            "profitFactor": 5.333333333333333,
+            "totalPnl": 39.607300693861816,
+            "maxDrawdown": 0.30000000000000293,
+            "finalBalance": 1039.6073006938618
+          },
+          "composite": 0.6630363636363635
+        },
+        {
+          "regime": "BULL",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 65,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": false,
+            "useMeanReversion": false,
+            "session": "LONDON",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_PULLBACK",
+          "metrics": {
+            "tradesCount": 11,
+            "winRate": 72.72727272727273,
+            "profitFactor": 5.333333333333333,
+            "totalPnl": 39.607300693861816,
+            "maxDrawdown": 0.30000000000000293,
+            "finalBalance": 1039.6073006938618
+          },
+          "composite": 0.6630363636363635
+        },
+        {
+          "regime": "BULL",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 65,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": false,
+            "useMeanReversion": false,
+            "session": "LONDON",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_PULLBACK",
+          "metrics": {
+            "tradesCount": 11,
+            "winRate": 72.72727272727273,
+            "profitFactor": 5.333333333333333,
+            "totalPnl": 39.607300693861816,
+            "maxDrawdown": 0.30000000000000293,
+            "finalBalance": 1039.6073006938618
+          },
+          "composite": 0.6630363636363635
+        },
+        {
+          "regime": "BULL",
+          "symbol": "BTCUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": false,
+            "useMeanReversion": false,
+            "session": "LONDON",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_PULLBACK",
+          "metrics": {
+            "tradesCount": 798,
+            "winRate": 72.4310776942356,
+            "profitFactor": 5.254545454545416,
+            "totalPnl": 15389.5747243695,
+            "maxDrawdown": 1.1972732019176213,
+            "finalBalance": 16389.5747243695
+          },
+          "composite": 0.6597608420673426
+        },
+        {
+          "regime": "BULL",
+          "symbol": "BTCUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": false,
+            "useMeanReversion": false,
+            "session": "LONDON",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_PULLBACK",
+          "metrics": {
+            "tradesCount": 798,
+            "winRate": 72.4310776942356,
+            "profitFactor": 5.254545454545416,
+            "totalPnl": 15389.5747243695,
+            "maxDrawdown": 1.1972732019176213,
+            "finalBalance": 16389.5747243695
+          },
+          "composite": 0.6597608420673426
+        },
+        {
+          "regime": "BULL",
+          "symbol": "BTCUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": false,
+            "useMeanReversion": false,
+            "session": "LONDON",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_PULLBACK",
+          "metrics": {
+            "tradesCount": 798,
+            "winRate": 72.4310776942356,
+            "profitFactor": 5.254545454545416,
+            "totalPnl": 15389.5747243695,
+            "maxDrawdown": 1.1972732019176213,
+            "finalBalance": 16389.5747243695
+          },
+          "composite": 0.6597608420673426
+        },
+        {
+          "regime": "BULL",
+          "symbol": "BTCUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": false,
+            "useMeanReversion": false,
+            "session": "LONDON",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_PULLBACK",
+          "metrics": {
+            "tradesCount": 798,
+            "winRate": 72.4310776942356,
+            "profitFactor": 5.254545454545416,
+            "totalPnl": 15389.5747243695,
+            "maxDrawdown": 1.1972732019176213,
+            "finalBalance": 16389.5747243695
+          },
+          "composite": 0.6597608420673426
+        },
+        {
+          "regime": "BULL",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "BULL",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "BULL",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "BULL",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "BULL",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 65,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "BULL",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 65,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "BULL",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 65,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "BULL",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 65,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "BULL",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 45,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "BULL",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 45,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "BULL",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 45,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "BULL",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 45,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        }
+      ],
+      "BEAR": [
+        {
+          "regime": "BEAR",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 65,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": false,
+            "useMeanReversion": false,
+            "session": "LONDON",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_PULLBACK",
+          "metrics": {
+            "tradesCount": 11,
+            "winRate": 72.72727272727273,
+            "profitFactor": 5.333333333333333,
+            "totalPnl": 39.607300693861816,
+            "maxDrawdown": 0.30000000000000293,
+            "finalBalance": 1039.6073006938618
+          },
+          "composite": 0.6630363636363635
+        },
+        {
+          "regime": "BEAR",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 65,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": false,
+            "useMeanReversion": false,
+            "session": "LONDON",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_PULLBACK",
+          "metrics": {
+            "tradesCount": 11,
+            "winRate": 72.72727272727273,
+            "profitFactor": 5.333333333333333,
+            "totalPnl": 39.607300693861816,
+            "maxDrawdown": 0.30000000000000293,
+            "finalBalance": 1039.6073006938618
+          },
+          "composite": 0.6630363636363635
+        },
+        {
+          "regime": "BEAR",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 65,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": false,
+            "useMeanReversion": false,
+            "session": "LONDON",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_PULLBACK",
+          "metrics": {
+            "tradesCount": 11,
+            "winRate": 72.72727272727273,
+            "profitFactor": 5.333333333333333,
+            "totalPnl": 39.607300693861816,
+            "maxDrawdown": 0.30000000000000293,
+            "finalBalance": 1039.6073006938618
+          },
+          "composite": 0.6630363636363635
+        },
+        {
+          "regime": "BEAR",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 65,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": false,
+            "useMeanReversion": false,
+            "session": "LONDON",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_PULLBACK",
+          "metrics": {
+            "tradesCount": 11,
+            "winRate": 72.72727272727273,
+            "profitFactor": 5.333333333333333,
+            "totalPnl": 39.607300693861816,
+            "maxDrawdown": 0.30000000000000293,
+            "finalBalance": 1039.6073006938618
+          },
+          "composite": 0.6630363636363635
+        },
+        {
+          "regime": "BEAR",
+          "symbol": "BTCUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": false,
+            "useMeanReversion": false,
+            "session": "LONDON",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_PULLBACK",
+          "metrics": {
+            "tradesCount": 798,
+            "winRate": 72.4310776942356,
+            "profitFactor": 5.254545454545416,
+            "totalPnl": 15389.5747243695,
+            "maxDrawdown": 1.1972732019176213,
+            "finalBalance": 16389.5747243695
+          },
+          "composite": 0.6597608420673426
+        },
+        {
+          "regime": "BEAR",
+          "symbol": "BTCUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": false,
+            "useMeanReversion": false,
+            "session": "LONDON",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_PULLBACK",
+          "metrics": {
+            "tradesCount": 798,
+            "winRate": 72.4310776942356,
+            "profitFactor": 5.254545454545416,
+            "totalPnl": 15389.5747243695,
+            "maxDrawdown": 1.1972732019176213,
+            "finalBalance": 16389.5747243695
+          },
+          "composite": 0.6597608420673426
+        },
+        {
+          "regime": "BEAR",
+          "symbol": "BTCUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": false,
+            "useMeanReversion": false,
+            "session": "LONDON",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_PULLBACK",
+          "metrics": {
+            "tradesCount": 798,
+            "winRate": 72.4310776942356,
+            "profitFactor": 5.254545454545416,
+            "totalPnl": 15389.5747243695,
+            "maxDrawdown": 1.1972732019176213,
+            "finalBalance": 16389.5747243695
+          },
+          "composite": 0.6597608420673426
+        },
+        {
+          "regime": "BEAR",
+          "symbol": "BTCUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": false,
+            "useMeanReversion": false,
+            "session": "LONDON",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_PULLBACK",
+          "metrics": {
+            "tradesCount": 798,
+            "winRate": 72.4310776942356,
+            "profitFactor": 5.254545454545416,
+            "totalPnl": 15389.5747243695,
+            "maxDrawdown": 1.1972732019176213,
+            "finalBalance": 16389.5747243695
+          },
+          "composite": 0.6597608420673426
+        },
+        {
+          "regime": "BEAR",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "BEAR",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "BEAR",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "BEAR",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "BEAR",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 65,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "BEAR",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 65,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "BEAR",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 65,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "BEAR",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 65,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "BEAR",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 45,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "BEAR",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 45,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "BEAR",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 45,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "BEAR",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 45,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        }
+      ],
+      "SIDEWAYS": [
+        {
+          "regime": "SIDEWAYS",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 65,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": false,
+            "useMeanReversion": false,
+            "session": "LONDON",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_PULLBACK",
+          "metrics": {
+            "tradesCount": 11,
+            "winRate": 72.72727272727273,
+            "profitFactor": 5.333333333333333,
+            "totalPnl": 39.607300693861816,
+            "maxDrawdown": 0.30000000000000293,
+            "finalBalance": 1039.6073006938618
+          },
+          "composite": 0.6630363636363635
+        },
+        {
+          "regime": "SIDEWAYS",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 65,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": false,
+            "useMeanReversion": false,
+            "session": "LONDON",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_PULLBACK",
+          "metrics": {
+            "tradesCount": 11,
+            "winRate": 72.72727272727273,
+            "profitFactor": 5.333333333333333,
+            "totalPnl": 39.607300693861816,
+            "maxDrawdown": 0.30000000000000293,
+            "finalBalance": 1039.6073006938618
+          },
+          "composite": 0.6630363636363635
+        },
+        {
+          "regime": "SIDEWAYS",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 65,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": false,
+            "useMeanReversion": false,
+            "session": "LONDON",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_PULLBACK",
+          "metrics": {
+            "tradesCount": 11,
+            "winRate": 72.72727272727273,
+            "profitFactor": 5.333333333333333,
+            "totalPnl": 39.607300693861816,
+            "maxDrawdown": 0.30000000000000293,
+            "finalBalance": 1039.6073006938618
+          },
+          "composite": 0.6630363636363635
+        },
+        {
+          "regime": "SIDEWAYS",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 65,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": false,
+            "useMeanReversion": false,
+            "session": "LONDON",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_PULLBACK",
+          "metrics": {
+            "tradesCount": 11,
+            "winRate": 72.72727272727273,
+            "profitFactor": 5.333333333333333,
+            "totalPnl": 39.607300693861816,
+            "maxDrawdown": 0.30000000000000293,
+            "finalBalance": 1039.6073006938618
+          },
+          "composite": 0.6630363636363635
+        },
+        {
+          "regime": "SIDEWAYS",
+          "symbol": "BTCUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": false,
+            "useMeanReversion": false,
+            "session": "LONDON",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_PULLBACK",
+          "metrics": {
+            "tradesCount": 798,
+            "winRate": 72.4310776942356,
+            "profitFactor": 5.254545454545416,
+            "totalPnl": 15389.5747243695,
+            "maxDrawdown": 1.1972732019176213,
+            "finalBalance": 16389.5747243695
+          },
+          "composite": 0.6597608420673426
+        },
+        {
+          "regime": "SIDEWAYS",
+          "symbol": "BTCUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": false,
+            "useMeanReversion": false,
+            "session": "LONDON",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_PULLBACK",
+          "metrics": {
+            "tradesCount": 798,
+            "winRate": 72.4310776942356,
+            "profitFactor": 5.254545454545416,
+            "totalPnl": 15389.5747243695,
+            "maxDrawdown": 1.1972732019176213,
+            "finalBalance": 16389.5747243695
+          },
+          "composite": 0.6597608420673426
+        },
+        {
+          "regime": "SIDEWAYS",
+          "symbol": "BTCUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": false,
+            "useMeanReversion": false,
+            "session": "LONDON",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_PULLBACK",
+          "metrics": {
+            "tradesCount": 798,
+            "winRate": 72.4310776942356,
+            "profitFactor": 5.254545454545416,
+            "totalPnl": 15389.5747243695,
+            "maxDrawdown": 1.1972732019176213,
+            "finalBalance": 16389.5747243695
+          },
+          "composite": 0.6597608420673426
+        },
+        {
+          "regime": "SIDEWAYS",
+          "symbol": "BTCUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": false,
+            "useMeanReversion": false,
+            "session": "LONDON",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_PULLBACK",
+          "metrics": {
+            "tradesCount": 798,
+            "winRate": 72.4310776942356,
+            "profitFactor": 5.254545454545416,
+            "totalPnl": 15389.5747243695,
+            "maxDrawdown": 1.1972732019176213,
+            "finalBalance": 16389.5747243695
+          },
+          "composite": 0.6597608420673426
+        },
+        {
+          "regime": "SIDEWAYS",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "SIDEWAYS",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "SIDEWAYS",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "SIDEWAYS",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "SIDEWAYS",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 65,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "SIDEWAYS",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 65,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "SIDEWAYS",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 65,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "SIDEWAYS",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 35,
+            "rsiOverbought": 65,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "SIDEWAYS",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 45,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "SIDEWAYS",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 45,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 20,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "SIDEWAYS",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 45,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 100,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        },
+        {
+          "regime": "SIDEWAYS",
+          "symbol": "ETHUSDT",
+          "timeframe": "5m",
+          "params": {
+            "rsiOversold": 45,
+            "rsiOverbought": 55,
+            "emaFastPeriod": 50,
+            "emaSlowPeriod": 200,
+            "atrMultiplier": 3.5,
+            "tpMultiplier": 1.5,
+            "useBreakout": true,
+            "useMeanReversion": false,
+            "session": "NY",
+            "useSessionFilter": true
+          },
+          "strategy": "MODULAR_V6_BREAKOUT",
+          "metrics": {
+            "tradesCount": 1826,
+            "winRate": 72.34392113910187,
+            "profitFactor": 5.231683168316975,
+            "totalPnl": 591908.2295541874,
+            "maxDrawdown": 1.1946107919000142,
+            "finalBalance": 592908.2295541874
+          },
+          "composite": 0.6593303841117092
+        }
+      ]
+    },
+    "validation": [
+      {
+        "symbol": "BTCUSDT",
+        "timeframe": "5m",
+        "ok": false,
+        "candles": 262944,
+        "gaps": 1,
+        "duplicates": 0,
+        "outOfOrder": 0,
+        "badOHLCV": 0,
+        "details": {
+          "gaps": [
+            {
+              "index": 96192,
+              "from": "2021-11-30T23:55:00.000Z",
+              "to": "2022-04-01T00:00:00.000Z",
+              "missingCandles": 34848
+            }
+          ],
+          "duplicates": [],
+          "outOfOrder": [],
+          "badOHLCV": []
+        }
+      },
+      {
+        "symbol": "ETHUSDT",
+        "timeframe": "5m",
+        "ok": false,
+        "candles": 262944,
+        "gaps": 1,
+        "duplicates": 0,
+        "outOfOrder": 0,
+        "badOHLCV": 0,
+        "details": {
+          "gaps": [
+            {
+              "index": 96192,
+              "from": "2021-11-30T23:55:00.000Z",
+              "to": "2022-04-01T00:00:00.000Z",
+              "missingCandles": 34848
+            }
+          ],
+          "duplicates": [],
+          "outOfOrder": [],
+          "badOHLCV": []
+        }
+      }
+    ]
+  }
+]
