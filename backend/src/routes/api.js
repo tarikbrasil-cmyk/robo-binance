@@ -12,26 +12,23 @@ import { runBacktestProgrammatic } from '../backtestRunner.js';
 const router = express.Router();
 
 // Version marker for deploy verification
-router.get('/version', (req, res) => res.json({ version: 'v4-fallback-urls', deployed: new Date().toISOString() }));
+router.get('/version', (req, res) => res.json({ version: 'v5-bybit-fallback', deployed: new Date().toISOString() }));
 
 // Diagnostic: test Binance API connectivity from server
 router.get('/diag/binance', async (req, res) => {
   const axios = (await import('axios')).default;
   const urls = [
-    'https://fapi.binance.com/fapi/v1/klines',
-    'https://fapi1.binance.com/fapi/v1/klines',
-    'https://fapi2.binance.com/fapi/v1/klines',
-    'https://fapi3.binance.com/fapi/v1/klines',
-    'https://fapi4.binance.com/fapi/v1/klines',
+    { url: 'https://fapi.binance.com/fapi/v1/klines', params: { symbol: 'BTCUSDT', interval: '1h', limit: 1 } },
+    { url: 'https://fapi1.binance.com/fapi/v1/klines', params: { symbol: 'BTCUSDT', interval: '1h', limit: 1 } },
+    { url: 'https://api.binance.us/api/v3/klines', params: { symbol: 'BTCUSDT', interval: '1h', limit: 1 } },
+    { url: 'https://api.bybit.com/v5/market/kline', params: { category: 'linear', symbol: 'BTCUSDT', interval: '60', limit: 1 } },
   ];
   const results = [];
-  for (const url of urls) {
+  for (const { url, params } of urls) {
     try {
-      const r = await axios.get(url, {
-        params: { symbol: 'BTCUSDT', interval: '1h', limit: 1 },
-        timeout: 8000,
-      });
-      results.push({ url, status: r.status, candles: r.data?.length ?? 0 });
+      const r = await axios.get(url, { params, timeout: 8000 });
+      const count = Array.isArray(r.data) ? r.data.length : (r.data?.result?.list?.length ?? 0);
+      results.push({ url, status: r.status, candles: count });
     } catch (e) {
       results.push({ url, status: e.response?.status ?? 'network_error', error: e.message?.slice(0, 120) });
     }

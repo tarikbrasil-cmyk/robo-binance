@@ -2,7 +2,7 @@ services:
   - type: web
     name: robo-binance-backend
     runtime: node
-    region: ohio
+    region: singapore
     plan: free
     rootDir: backend
     buildCommand: npm install

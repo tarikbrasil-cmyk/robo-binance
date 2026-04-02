@@ -11,12 +11,14 @@ import axios from 'axios';
  * @param {string} [mode]    - "FUTURES" (default) ou "SPOT"
  */
 // Fallback URLs for geo-restricted regions (Render US servers)
+// Order: main futures → futures mirrors → Binance.US spot → Bybit futures
 const FUTURES_URLS = [
     'https://fapi.binance.com/fapi/v1/klines',
     'https://fapi1.binance.com/fapi/v1/klines',
     'https://fapi2.binance.com/fapi/v1/klines',
     'https://fapi3.binance.com/fapi/v1/klines',
     'https://fapi4.binance.com/fapi/v1/klines',
+    'https://api.binance.us/api/v3/klines',
 ];
 const SPOT_URLS = [
     'https://api.binance.com/api/v3/klines',
@@ -24,13 +26,45 @@ const SPOT_URLS = [
     'https://api2.binance.com/api/v3/klines',
     'https://api3.binance.com/api/v3/klines',
     'https://api4.binance.com/api/v3/klines',
+    'https://api.binance.us/api/v3/klines',
 ];
+
+// Bybit interval mapping (Binance '5m' → Bybit '5')
+const BYBIT_INTERVAL_MAP = { '1m': '1', '3m': '3', '5m': '5', '15m': '15', '30m': '30', '1h': '60', '2h': '120', '4h': '240', '1d': 'D', '1w': 'W' };
+
+async function fetchFromBybit(params) {
+    const bybitInterval = BYBIT_INTERVAL_MAP[params.interval] || params.interval.replace('m', '');
+    const resp = await axios.get('https://api.bybit.com/v5/market/kline', {
+        params: {
+            category: 'linear',
+            symbol: params.symbol,
+            interval: bybitInterval,
+            start: params.startTime,
+            end: params.endTime,
+            limit: params.limit || 1000,
+        },
+        timeout: 10000,
+    });
+    if (!resp.data?.result?.list?.length) throw new Error('Bybit returned no data');
+    // Convert Bybit format → Binance format. Bybit returns newest-first, so reverse.
+    const binanceFormat = resp.data.result.list.reverse().map(c => [
+        parseInt(c[0]), c[1], c[2], c[3], c[4], c[5],
+    ]);
+    console.log(`[Fallback] ✅ Bybit returned ${binanceFormat.length} candles (converted to Binance format)`);
+    return { data: binanceFormat, status: 200 };
+}
 
 async function fetchKlinesWithFallback(urls, params) {
     let lastError = null;
     for (const url of urls) {
         try {
             const resp = await axios.get(url, { params, timeout: 10000 });
+            // Some mirrors return 200/202 with empty or HTML body — treat as failure
+            if (!resp.data || !Array.isArray(resp.data) || resp.data.length === 0) {
+                console.warn(`[Fallback] ${url} returned empty/invalid data (status ${resp.status}), trying next...`);
+                continue;
+            }
+            console.log(`[Fallback] ✅ ${url} returned ${resp.data.length} candles`);
             return resp;
         } catch (err) {
             lastError = err;
@@ -38,7 +72,14 @@ async function fetchKlinesWithFallback(urls, params) {
             console.warn(`[Fallback] ${url} failed (${status}), trying next...`);
         }
     }
-    throw lastError;
+    // Last resort: try Bybit futures API (worldwide access, same BTCUSDT/ETHUSDT prices)
+    try {
+        console.log('[Fallback] All Binance endpoints failed. Trying Bybit...');
+        return await fetchFromBybit(params);
+    } catch (bybitErr) {
+        console.error('[Fallback] Bybit also failed:', bybitErr.message);
+    }
+    throw lastError || new Error('All data endpoints failed — server may be in a geo-restricted region');
 }
 
 export async function loadHistoricalData(symbol, interval, startTime, endTime, mode = 'FUTURES') {
