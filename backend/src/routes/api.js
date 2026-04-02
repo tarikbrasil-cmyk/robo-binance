@@ -12,7 +12,32 @@ import { runBacktestProgrammatic } from '../backtestRunner.js';
 const router = express.Router();
 
 // Version marker for deploy verification
-router.get('/version', (req, res) => res.json({ version: 'v3-modular-fix', deployed: new Date().toISOString() }));
+router.get('/version', (req, res) => res.json({ version: 'v4-fallback-urls', deployed: new Date().toISOString() }));
+
+// Diagnostic: test Binance API connectivity from server
+router.get('/diag/binance', async (req, res) => {
+  const axios = (await import('axios')).default;
+  const urls = [
+    'https://fapi.binance.com/fapi/v1/klines',
+    'https://fapi1.binance.com/fapi/v1/klines',
+    'https://fapi2.binance.com/fapi/v1/klines',
+    'https://fapi3.binance.com/fapi/v1/klines',
+    'https://fapi4.binance.com/fapi/v1/klines',
+  ];
+  const results = [];
+  for (const url of urls) {
+    try {
+      const r = await axios.get(url, {
+        params: { symbol: 'BTCUSDT', interval: '1h', limit: 1 },
+        timeout: 8000,
+      });
+      results.push({ url, status: r.status, candles: r.data?.length ?? 0 });
+    } catch (e) {
+      results.push({ url, status: e.response?.status ?? 'network_error', error: e.message?.slice(0, 120) });
+    }
+  }
+  res.json({ timestamp: new Date().toISOString(), results });
+});
 
 // ── Helpers: read / write strategy_config.json ─────────────────────────────
 const CONFIG_PATH = path.join(process.cwd(), 'config', 'strategy_config.json');
@@ -242,10 +267,11 @@ router.post('/backtest', async (req, res) => {
     );
     // Add diagnostic info
     result._debug = {
-      version: 'v3-modular-fix',
+      version: 'v4-fallback-urls',
       usedOverride,
       strategyName: strategyConfig?.general?.strategyName || 'from_config_file',
-      candlesLoaded: result.trades?.length === 0 ? 'check_server_logs' : 'ok',
+      candlesLoaded: result._candlesLoaded ?? 'unknown',
+      tradesGenerated: result.trades?.length ?? 0,
     };
     res.json(result);
   } catch (error) {

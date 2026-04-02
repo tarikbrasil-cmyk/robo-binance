@@ -10,11 +10,40 @@ import axios from 'axios';
  * @param {number} endTime   - ms epoch
  * @param {string} [mode]    - "FUTURES" (default) ou "SPOT"
  */
+// Fallback URLs for geo-restricted regions (Render US servers)
+const FUTURES_URLS = [
+    'https://fapi.binance.com/fapi/v1/klines',
+    'https://fapi1.binance.com/fapi/v1/klines',
+    'https://fapi2.binance.com/fapi/v1/klines',
+    'https://fapi3.binance.com/fapi/v1/klines',
+    'https://fapi4.binance.com/fapi/v1/klines',
+];
+const SPOT_URLS = [
+    'https://api.binance.com/api/v3/klines',
+    'https://api1.binance.com/api/v3/klines',
+    'https://api2.binance.com/api/v3/klines',
+    'https://api3.binance.com/api/v3/klines',
+    'https://api4.binance.com/api/v3/klines',
+];
+
+async function fetchKlinesWithFallback(urls, params) {
+    let lastError = null;
+    for (const url of urls) {
+        try {
+            const resp = await axios.get(url, { params, timeout: 10000 });
+            return resp;
+        } catch (err) {
+            lastError = err;
+            const status = err.response?.status || 'network';
+            console.warn(`[Fallback] ${url} failed (${status}), trying next...`);
+        }
+    }
+    throw lastError;
+}
+
 export async function loadHistoricalData(symbol, interval, startTime, endTime, mode = 'FUTURES') {
     const isSpot = mode.toUpperCase() === 'SPOT';
-    const klinesUrl = isSpot
-        ? 'https://api.binance.com/api/v3/klines'
-        : 'https://fapi.binance.com/fapi/v1/klines';
+    const fallbackUrls = isSpot ? SPOT_URLS : FUTURES_URLS;
 
     const dataDir = path.join(process.cwd(), 'historical_data');
     if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
@@ -55,16 +84,13 @@ export async function loadHistoricalData(symbol, interval, startTime, endTime, m
     while (start < endTime) {
         const end = Math.min(endTime, start + limit * 60000);
         try {
-            const resp = await axios.get(klinesUrl, {
-                params: { 
+            const resp = await fetchKlinesWithFallback(fallbackUrls, { 
                     symbol: symbol.toUpperCase(), 
                     interval: interval, 
                     startTime: start, 
                     endTime: end, 
                     limit 
-                },
-                timeout: 10000 // 10s timeout
-            });
+                });
 
             if (resp.data && resp.data.length > 0) {
                 resp.data.forEach(c => {

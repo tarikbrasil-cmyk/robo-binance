@@ -1,130 +1,168 @@
 {
-  "timestamp": "2026-04-02T13:51:51.255Z",
+  "timestamp": "2026-04-02T16:23:31.897Z",
   "searchConfig": {
     "symbols": [
       "BTCUSDT",
       "ETHUSDT"
     ],
     "timeframe": "5m",
-    "gridSize": 9216,
-    "totalRuns": 55296,
+    "emaGroups": [
+      {
+        "emaFast": 20,
+        "emaSlow": 100
+      },
+      {
+        "emaFast": 20,
+        "emaSlow": 200
+      },
+      {
+        "emaFast": 50,
+        "emaSlow": 200
+      }
+    ],
+    "gridSize": 22500,
+    "totalRuns": 135000,
     "filters": {
-      "minTradesPerRegime": 10,
-      "minWinRate": 38,
-      "minProfitFactor": 0.9,
-      "maxDrawdown": 35
+      "minTradesPerRegime": 15,
+      "minWinRate": 40,
+      "minProfitFactor": 1,
+      "maxDrawdown": 30
     }
   },
   "winners": {
     "BTCUSDT": {
       "params": {
-        "emaFast": 20,
-        "emaSlow": 200,
         "rsiOversold": 40,
-        "rsiOverbought": 65,
-        "atrMult": 1.5,
-        "tpMult": 2,
-        "mode": "pullback",
+        "rsiOverbought": 60,
+        "atrMultiplier": 3.5,
+        "tpMultiplier": 1.5,
         "session": "NY",
-        "cc": true
+        "useCandleConfirmation": true,
+        "emaFastPeriod": 20,
+        "emaSlowPeriod": 100,
+        "emaHTFPeriod": 1000,
+        "useEmaHTF": false,
+        "rsiPeriod": 14,
+        "useSessionFilter": true,
+        "useMacd": false,
+        "useBreakout": false,
+        "useMeanReversion": false
       },
-      "score": 0.5959975606634927,
+      "score": 0.6346017075252116,
       "summary": {
-        "avgWR": 56.15588115588116,
-        "minWR": 55.55555555555556,
-        "avgPF": 1.6582261686594846,
-        "minPF": 1.6072798005492226,
-        "maxDD": 8.495710460092413,
-        "avgSharpe": 1.900789207523071,
-        "totalPnlPct": 94.01000891526806,
-        "totalTrades": 137
+        "avgWR": 80.08037997807817,
+        "minWR": 77.01863354037268,
+        "avgPF": 1.6989241046292731,
+        "minPF": 1.3793617429055922,
+        "maxDD": 8.783751931560712,
+        "avgSharpe": 2.116956189049621,
+        "totalPnlPct": 104.81786355102115,
+        "totalTrades": 344
       },
       "regimes": {
         "BULL": {
-          "tradesCount": 52,
-          "winRate": 55.769230769230774,
-          "profitFactor": 1.6072798005492226,
-          "totalPnl": 3478.8901080317773,
-          "totalPnlPct": 34.78890108031777,
-          "maxDrawdown": 7.197464861866684,
-          "finalBalance": 13478.890108031777,
-          "sharpeRatio": 1.9586899573373522
+          "tradesCount": 68,
+          "winRate": 82.35294117647058,
+          "profitFactor": 1.9455184019966991,
+          "totalPnl": 2655.6928596850703,
+          "totalPnlPct": 26.556928596850703,
+          "maxDrawdown": 3.9599999999999955,
+          "finalBalance": 12655.69285968507,
+          "sharpeRatio": 2.7652518882406265,
+          "expectancy": 0.3905430676007456,
+          "avgRR": 0.4285714285714282
         },
         "BEAR": {
-          "tradesCount": 36,
-          "winRate": 55.55555555555556,
-          "profitFactor": 1.6146214269173589,
-          "totalPnl": 2251.9847253268545,
-          "totalPnlPct": 22.519847253268544,
-          "maxDrawdown": 8.495710460092413,
-          "finalBalance": 12251.984725326854,
-          "sharpeRatio": 1.690204734415333
+          "tradesCount": 115,
+          "winRate": 80.8695652173913,
+          "profitFactor": 1.771892168985528,
+          "totalPnl": 4180.552162076468,
+          "totalPnlPct": 41.80552162076469,
+          "maxDrawdown": 5.666991863806588,
+          "finalBalance": 14180.552162076468,
+          "sharpeRatio": 2.242333408723656,
+          "expectancy": 0.36352627496317097,
+          "avgRR": 0.42857142857142755
         },
         "SIDEWAYS": {
-          "tradesCount": 49,
-          "winRate": 57.14285714285714,
-          "profitFactor": 1.752777278511872,
-          "totalPnl": 3670.1260581681745,
-          "totalPnlPct": 36.701260581681744,
-          "maxDrawdown": 7.763184000000006,
-          "finalBalance": 13670.126058168174,
-          "sharpeRatio": 2.053472930816527
+          "tradesCount": 161,
+          "winRate": 77.01863354037268,
+          "profitFactor": 1.3793617429055922,
+          "totalPnl": 3645.541333340576,
+          "totalPnlPct": 36.45541333340576,
+          "maxDrawdown": 8.783751931560712,
+          "finalBalance": 13645.541333340576,
+          "sharpeRatio": 1.3432832701845803,
+          "expectancy": 0.22643113871680565,
+          "avgRR": 0.4285714285714263
         }
       }
     },
     "ETHUSDT": {
       "params": {
-        "emaFast": 20,
-        "emaSlow": 100,
-        "rsiOversold": 30,
+        "rsiOversold": 25,
         "rsiOverbought": 60,
-        "atrMult": 2.5,
-        "tpMult": 1.5,
-        "mode": "pullback",
+        "atrMultiplier": 2.5,
+        "tpMultiplier": 1.5,
         "session": "NY",
-        "cc": true
+        "useCandleConfirmation": true,
+        "emaFastPeriod": 20,
+        "emaSlowPeriod": 200,
+        "emaHTFPeriod": 1000,
+        "useEmaHTF": false,
+        "rsiPeriod": 14,
+        "useSessionFilter": true,
+        "useMacd": false,
+        "useBreakout": false,
+        "useMeanReversion": false
       },
-      "score": 0.6363196471680372,
+      "score": 0.6733621183291774,
       "summary": {
-        "avgWR": 77.44539411206078,
-        "minWR": 73.07692307692307,
-        "avgPF": 2.250194852156578,
-        "minPF": 1.6240346884830996,
-        "maxDD": 5.8807999999999945,
-        "avgSharpe": 1.9843338566958504,
-        "totalPnlPct": 40.45348084734768,
-        "totalTrades": 80
+        "avgWR": 76.26145309072139,
+        "minWR": 75.39682539682539,
+        "avgPF": 1.9222207577850785,
+        "minPF": 1.8011009151686679,
+        "maxDD": 7.086567572609782,
+        "avgSharpe": 2.2018226421385516,
+        "totalPnlPct": 138.15503810644577,
+        "totalTrades": 257
       },
       "regimes": {
         "BULL": {
-          "tradesCount": 26,
-          "winRate": 73.07692307692307,
-          "profitFactor": 1.6240346884830996,
-          "totalPnl": 889.6085253313813,
-          "totalPnlPct": 8.896085253313814,
-          "maxDrawdown": 2.8075199999999985,
-          "finalBalance": 10889.608525331381,
-          "sharpeRatio": 1.29268240524292
+          "tradesCount": 41,
+          "winRate": 75.60975609756098,
+          "profitFactor": 1.8502247284918303,
+          "totalPnl": 1826.5111218210768,
+          "totalPnlPct": 18.26511121821077,
+          "maxDrawdown": 2.807520000000002,
+          "finalBalance": 11826.511121821077,
+          "sharpeRatio": 1.9852120109347071,
+          "expectancy": 0.44549051751733443,
+          "avgRR": 0.5999999999999991
         },
         "BEAR": {
-          "tradesCount": 27,
-          "winRate": 85.18518518518519,
-          "profitFactor": 3.4416983605341573,
-          "totalPnl": 2135.455731768032,
-          "totalPnlPct": 21.35455731768032,
-          "maxDrawdown": 3.960000000000003,
-          "finalBalance": 12135.455731768032,
-          "sharpeRatio": 3.2688300909134846
+          "tradesCount": 90,
+          "winRate": 77.77777777777779,
+          "profitFactor": 2.1153366296947373,
+          "totalPnl": 5387.121713768331,
+          "totalPnlPct": 53.8712171376833,
+          "maxDrawdown": 3.9600000000000066,
+          "finalBalance": 15387.12171376833,
+          "sharpeRatio": 2.5812598204867983,
+          "expectancy": 0.5985690793075924,
+          "avgRR": 0.5999999999999989
         },
         "SIDEWAYS": {
-          "tradesCount": 27,
-          "winRate": 74.07407407407408,
-          "profitFactor": 1.6848515074524775,
-          "totalPnl": 1020.2838276353541,
-          "totalPnlPct": 10.20283827635354,
-          "maxDrawdown": 5.8807999999999945,
-          "finalBalance": 11020.283827635354,
-          "sharpeRatio": 1.391489073931147
+          "tradesCount": 126,
+          "winRate": 75.39682539682539,
+          "profitFactor": 1.8011009151686679,
+          "totalPnl": 6601.870975055168,
+          "totalPnlPct": 66.01870975055168,
+          "maxDrawdown": 7.086567572609782,
+          "finalBalance": 16601.870975055168,
+          "sharpeRatio": 2.0389960949941486,
+          "expectancy": 0.5239580138932669,
+          "avgRR": 0.5999999999999976
         }
       }
     }
@@ -133,567 +171,307 @@
     "BTCUSDT": [
       {
         "params": {
-          "emaFast": 20,
-          "emaSlow": 200,
           "rsiOversold": 40,
-          "rsiOverbought": 65,
-          "atrMult": 1.5,
-          "tpMult": 2,
-          "mode": "pullback",
+          "rsiOverbought": 60,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 1.5,
           "session": "NY",
-          "cc": true
+          "useCandleConfirmation": true,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 100,
+          "emaHTFPeriod": 1000,
+          "useEmaHTF": false,
+          "rsiPeriod": 14,
+          "useSessionFilter": true,
+          "useMacd": false,
+          "useBreakout": false,
+          "useMeanReversion": false
         },
-        "score": 0.5959975606634927,
+        "score": 0.6346017075252116,
         "summary": {
-          "avgWR": 56.15588115588116,
-          "minWR": 55.55555555555556,
-          "avgPF": 1.6582261686594846,
-          "minPF": 1.6072798005492226,
-          "maxDD": 8.495710460092413,
-          "avgSharpe": 1.900789207523071,
-          "totalPnlPct": 94.01000891526806,
-          "totalTrades": 137
-        },
-        "regimes": {
-          "BULL": {
-            "tradesCount": 52,
-            "winRate": 55.769230769230774,
-            "profitFactor": 1.6072798005492226,
-            "totalPnl": 3478.8901080317773,
-            "totalPnlPct": 34.78890108031777,
-            "maxDrawdown": 7.197464861866684,
-            "finalBalance": 13478.890108031777,
-            "sharpeRatio": 1.9586899573373522
-          },
-          "BEAR": {
-            "tradesCount": 36,
-            "winRate": 55.55555555555556,
-            "profitFactor": 1.6146214269173589,
-            "totalPnl": 2251.9847253268545,
-            "totalPnlPct": 22.519847253268544,
-            "maxDrawdown": 8.495710460092413,
-            "finalBalance": 12251.984725326854,
-            "sharpeRatio": 1.690204734415333
-          },
-          "SIDEWAYS": {
-            "tradesCount": 49,
-            "winRate": 57.14285714285714,
-            "profitFactor": 1.752777278511872,
-            "totalPnl": 3670.1260581681745,
-            "totalPnlPct": 36.701260581681744,
-            "maxDrawdown": 7.763184000000006,
-            "finalBalance": 13670.126058168174,
-            "sharpeRatio": 2.053472930816527
-          }
+          "avgWR": 80.08037997807817,
+          "minWR": 77.01863354037268,
+          "avgPF": 1.6989241046292731,
+          "minPF": 1.3793617429055922,
+          "maxDD": 8.783751931560712,
+          "avgSharpe": 2.116956189049621,
+          "totalPnlPct": 104.81786355102115,
+          "totalTrades": 344
         }
       },
       {
         "params": {
-          "emaFast": 20,
-          "emaSlow": 200,
+          "rsiOversold": 40,
+          "rsiOverbought": 60,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 2,
+          "session": "NY",
+          "useCandleConfirmation": true,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 100,
+          "emaHTFPeriod": 1000,
+          "useEmaHTF": false,
+          "rsiPeriod": 14,
+          "useSessionFilter": true,
+          "useMacd": false,
+          "useBreakout": false,
+          "useMeanReversion": false
+        },
+        "score": 0.6333847447532646,
+        "summary": {
+          "avgWR": 74.58439897698209,
+          "minWR": 72.5,
+          "avgPF": 1.641911518194106,
+          "minPF": 1.4546186434254493,
+          "maxDD": 7.530009329152029,
+          "avgSharpe": 2.076326905641304,
+          "totalPnlPct": 132.2121893482431,
+          "totalTrades": 343
+        }
+      },
+      {
+        "params": {
+          "rsiOversold": 40,
+          "rsiOverbought": 65,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 2,
+          "session": "NY",
+          "useCandleConfirmation": true,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 100,
+          "emaHTFPeriod": 1000,
+          "useEmaHTF": false,
+          "rsiPeriod": 14,
+          "useSessionFilter": true,
+          "useMacd": false,
+          "useBreakout": false,
+          "useMeanReversion": false
+        },
+        "score": 0.6204556290885345,
+        "summary": {
+          "avgWR": 76.81796856673704,
+          "minWR": 75,
+          "avgPF": 1.8518059446671646,
+          "minPF": 1.65100899127158,
+          "maxDD": 6.709048959999999,
+          "avgSharpe": 1.6408896607641557,
+          "totalPnlPct": 67.14402999161766,
+          "totalTrades": 150
+        }
+      },
+      {
+        "params": {
           "rsiOversold": 40,
           "rsiOverbought": 70,
-          "atrMult": 1.5,
-          "tpMult": 2,
-          "mode": "pullback",
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 2,
           "session": "NY",
-          "cc": true
+          "useCandleConfirmation": true,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 100,
+          "emaHTFPeriod": 1000,
+          "useEmaHTF": false,
+          "rsiPeriod": 14,
+          "useSessionFilter": true,
+          "useMacd": false,
+          "useBreakout": false,
+          "useMeanReversion": false
         },
-        "score": 0.5959975606634927,
+        "score": 0.6204556290885345,
         "summary": {
-          "avgWR": 56.15588115588116,
-          "minWR": 55.55555555555556,
-          "avgPF": 1.6582261686594846,
-          "minPF": 1.6072798005492226,
-          "maxDD": 8.495710460092413,
-          "avgSharpe": 1.900789207523071,
-          "totalPnlPct": 94.01000891526806,
-          "totalTrades": 137
-        },
-        "regimes": {
-          "BULL": {
-            "tradesCount": 52,
-            "winRate": 55.769230769230774,
-            "profitFactor": 1.6072798005492226,
-            "totalPnl": 3478.8901080317773,
-            "totalPnlPct": 34.78890108031777,
-            "maxDrawdown": 7.197464861866684,
-            "finalBalance": 13478.890108031777,
-            "sharpeRatio": 1.9586899573373522
-          },
-          "BEAR": {
-            "tradesCount": 36,
-            "winRate": 55.55555555555556,
-            "profitFactor": 1.6146214269173589,
-            "totalPnl": 2251.9847253268545,
-            "totalPnlPct": 22.519847253268544,
-            "maxDrawdown": 8.495710460092413,
-            "finalBalance": 12251.984725326854,
-            "sharpeRatio": 1.690204734415333
-          },
-          "SIDEWAYS": {
-            "tradesCount": 49,
-            "winRate": 57.14285714285714,
-            "profitFactor": 1.752777278511872,
-            "totalPnl": 3670.1260581681745,
-            "totalPnlPct": 36.701260581681744,
-            "maxDrawdown": 7.763184000000006,
-            "finalBalance": 13670.126058168174,
-            "sharpeRatio": 2.053472930816527
-          }
+          "avgWR": 76.81796856673704,
+          "minWR": 75,
+          "avgPF": 1.8518059446671646,
+          "minPF": 1.65100899127158,
+          "maxDD": 6.709048959999999,
+          "avgSharpe": 1.6408896607641557,
+          "totalPnlPct": 67.14402999161766,
+          "totalTrades": 150
         }
       },
       {
         "params": {
-          "emaFast": 20,
-          "emaSlow": 200,
           "rsiOversold": 40,
-          "rsiOverbought": 65,
-          "atrMult": 2,
-          "tpMult": 3,
-          "mode": "pullback",
+          "rsiOverbought": 75,
+          "atrMultiplier": 3.5,
+          "tpMultiplier": 2,
           "session": "NY",
-          "cc": true
+          "useCandleConfirmation": true,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 100,
+          "emaHTFPeriod": 1000,
+          "useEmaHTF": false,
+          "rsiPeriod": 14,
+          "useSessionFilter": true,
+          "useMacd": false,
+          "useBreakout": false,
+          "useMeanReversion": false
         },
-        "score": 0.5817900624082243,
+        "score": 0.6204556290885345,
         "summary": {
-          "avgWR": 53.115646258503396,
-          "minWR": 52,
-          "avgPF": 1.6565807627485143,
-          "minPF": 1.573542064408866,
-          "maxDD": 7.763183999999996,
-          "avgSharpe": 1.8862212251450303,
-          "totalPnlPct": 95.22584423772065,
-          "totalTrades": 134
-        },
-        "regimes": {
-          "BULL": {
-            "tradesCount": 50,
-            "winRate": 52,
-            "profitFactor": 1.573542064408866,
-            "totalPnl": 3279.86496440687,
-            "totalPnlPct": 32.7986496440687,
-            "maxDrawdown": 6.896157929600001,
-            "finalBalance": 13279.86496440687,
-            "sharpeRatio": 1.7941916924039416
-          },
-          "BEAR": {
-            "tradesCount": 35,
-            "winRate": 54.285714285714285,
-            "profitFactor": 1.7104936677764533,
-            "totalPnl": 2691.8368426234956,
-            "totalPnlPct": 26.918368426234956,
-            "maxDrawdown": 7.763183999999996,
-            "finalBalance": 12691.836842623496,
-            "sharpeRatio": 1.8879970048868806
-          },
-          "SIDEWAYS": {
-            "tradesCount": 49,
-            "winRate": 53.06122448979592,
-            "profitFactor": 1.6857065560602236,
-            "totalPnl": 3550.882616741699,
-            "totalPnlPct": 35.50882616741699,
-            "maxDrawdown": 5.8808,
-            "finalBalance": 13550.8826167417,
-            "sharpeRatio": 1.976474978144268
-          }
-        }
-      },
-      {
-        "params": {
-          "emaFast": 20,
-          "emaSlow": 200,
-          "rsiOversold": 40,
-          "rsiOverbought": 70,
-          "atrMult": 2,
-          "tpMult": 3,
-          "mode": "pullback",
-          "session": "NY",
-          "cc": true
-        },
-        "score": 0.5817900624082243,
-        "summary": {
-          "avgWR": 53.115646258503396,
-          "minWR": 52,
-          "avgPF": 1.6565807627485143,
-          "minPF": 1.573542064408866,
-          "maxDD": 7.763183999999996,
-          "avgSharpe": 1.8862212251450303,
-          "totalPnlPct": 95.22584423772065,
-          "totalTrades": 134
-        },
-        "regimes": {
-          "BULL": {
-            "tradesCount": 50,
-            "winRate": 52,
-            "profitFactor": 1.573542064408866,
-            "totalPnl": 3279.86496440687,
-            "totalPnlPct": 32.7986496440687,
-            "maxDrawdown": 6.896157929600001,
-            "finalBalance": 13279.86496440687,
-            "sharpeRatio": 1.7941916924039416
-          },
-          "BEAR": {
-            "tradesCount": 35,
-            "winRate": 54.285714285714285,
-            "profitFactor": 1.7104936677764533,
-            "totalPnl": 2691.8368426234956,
-            "totalPnlPct": 26.918368426234956,
-            "maxDrawdown": 7.763183999999996,
-            "finalBalance": 12691.836842623496,
-            "sharpeRatio": 1.8879970048868806
-          },
-          "SIDEWAYS": {
-            "tradesCount": 49,
-            "winRate": 53.06122448979592,
-            "profitFactor": 1.6857065560602236,
-            "totalPnl": 3550.882616741699,
-            "totalPnlPct": 35.50882616741699,
-            "maxDrawdown": 5.8808,
-            "finalBalance": 13550.8826167417,
-            "sharpeRatio": 1.976474978144268
-          }
-        }
-      },
-      {
-        "params": {
-          "emaFast": 20,
-          "emaSlow": 200,
-          "rsiOversold": 40,
-          "rsiOverbought": 65,
-          "atrMult": 1.5,
-          "tpMult": 3,
-          "mode": "pullback",
-          "session": "NY",
-          "cc": true
-        },
-        "score": 0.5576089121403301,
-        "summary": {
-          "avgWR": 48.47467876039304,
-          "minWR": 44.44444444444444,
-          "avgPF": 1.8416744742384257,
-          "minPF": 1.5612151369116813,
-          "maxDD": 7.872392390143988,
-          "avgSharpe": 2.138571607631725,
-          "totalPnlPct": 150.45132428154918,
-          "totalTrades": 135
-        },
-        "regimes": {
-          "BULL": {
-            "tradesCount": 50,
-            "winRate": 52,
-            "profitFactor": 2.0719082716817168,
-            "totalPnl": 7072.3237701270955,
-            "totalPnlPct": 70.72323770127096,
-            "maxDrawdown": 5.992237132800005,
-            "finalBalance": 17072.323770127095,
-            "sharpeRatio": 2.6925483329636504
-          },
-          "BEAR": {
-            "tradesCount": 36,
-            "winRate": 44.44444444444444,
-            "profitFactor": 1.5612151369116813,
-            "totalPnl": 2504.1721059526117,
-            "totalPnlPct": 25.041721059526118,
-            "maxDrawdown": 7.763183999999998,
-            "finalBalance": 12504.172105952612,
-            "sharpeRatio": 1.4985466684572815
-          },
-          "SIDEWAYS": {
-            "tradesCount": 49,
-            "winRate": 48.97959183673469,
-            "profitFactor": 1.891900014121879,
-            "totalPnl": 5468.63655207521,
-            "totalPnlPct": 54.6863655207521,
-            "maxDrawdown": 7.872392390143988,
-            "finalBalance": 15468.63655207521,
-            "sharpeRatio": 2.224619821474244
-          }
+          "avgWR": 76.81796856673704,
+          "minWR": 75,
+          "avgPF": 1.8518059446671646,
+          "minPF": 1.65100899127158,
+          "maxDD": 6.709048959999999,
+          "avgSharpe": 1.6408896607641557,
+          "totalPnlPct": 67.14402999161766,
+          "totalTrades": 150
         }
       }
     ],
     "ETHUSDT": [
       {
         "params": {
-          "emaFast": 20,
-          "emaSlow": 100,
-          "rsiOversold": 30,
+          "rsiOversold": 25,
           "rsiOverbought": 60,
-          "atrMult": 2.5,
-          "tpMult": 1.5,
-          "mode": "pullback",
+          "atrMultiplier": 2.5,
+          "tpMultiplier": 1.5,
           "session": "NY",
-          "cc": true
+          "useCandleConfirmation": true,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 200,
+          "emaHTFPeriod": 1000,
+          "useEmaHTF": false,
+          "rsiPeriod": 14,
+          "useSessionFilter": true,
+          "useMacd": false,
+          "useBreakout": false,
+          "useMeanReversion": false
         },
-        "score": 0.6363196471680372,
+        "score": 0.6733621183291774,
         "summary": {
-          "avgWR": 77.44539411206078,
-          "minWR": 73.07692307692307,
-          "avgPF": 2.250194852156578,
-          "minPF": 1.6240346884830996,
-          "maxDD": 5.8807999999999945,
-          "avgSharpe": 1.9843338566958504,
-          "totalPnlPct": 40.45348084734768,
-          "totalTrades": 80
-        },
-        "regimes": {
-          "BULL": {
-            "tradesCount": 26,
-            "winRate": 73.07692307692307,
-            "profitFactor": 1.6240346884830996,
-            "totalPnl": 889.6085253313813,
-            "totalPnlPct": 8.896085253313814,
-            "maxDrawdown": 2.8075199999999985,
-            "finalBalance": 10889.608525331381,
-            "sharpeRatio": 1.29268240524292
-          },
-          "BEAR": {
-            "tradesCount": 27,
-            "winRate": 85.18518518518519,
-            "profitFactor": 3.4416983605341573,
-            "totalPnl": 2135.455731768032,
-            "totalPnlPct": 21.35455731768032,
-            "maxDrawdown": 3.960000000000003,
-            "finalBalance": 12135.455731768032,
-            "sharpeRatio": 3.2688300909134846
-          },
-          "SIDEWAYS": {
-            "tradesCount": 27,
-            "winRate": 74.07407407407408,
-            "profitFactor": 1.6848515074524775,
-            "totalPnl": 1020.2838276353541,
-            "totalPnlPct": 10.20283827635354,
-            "maxDrawdown": 5.8807999999999945,
-            "finalBalance": 11020.283827635354,
-            "sharpeRatio": 1.391489073931147
-          }
+          "avgWR": 76.26145309072139,
+          "minWR": 75.39682539682539,
+          "avgPF": 1.9222207577850785,
+          "minPF": 1.8011009151686679,
+          "maxDD": 7.086567572609782,
+          "avgSharpe": 2.2018226421385516,
+          "totalPnlPct": 138.15503810644577,
+          "totalTrades": 257
         }
       },
       {
         "params": {
-          "emaFast": 20,
-          "emaSlow": 100,
+          "rsiOversold": 30,
+          "rsiOverbought": 60,
+          "atrMultiplier": 2.5,
+          "tpMultiplier": 1.5,
+          "session": "NY",
+          "useCandleConfirmation": true,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 200,
+          "emaHTFPeriod": 1000,
+          "useEmaHTF": false,
+          "rsiPeriod": 14,
+          "useSessionFilter": true,
+          "useMacd": false,
+          "useBreakout": false,
+          "useMeanReversion": false
+        },
+        "score": 0.6733621183291774,
+        "summary": {
+          "avgWR": 76.26145309072139,
+          "minWR": 75.39682539682539,
+          "avgPF": 1.9222207577850785,
+          "minPF": 1.8011009151686679,
+          "maxDD": 7.086567572609782,
+          "avgSharpe": 2.2018226421385516,
+          "totalPnlPct": 138.15503810644577,
+          "totalTrades": 257
+        }
+      },
+      {
+        "params": {
           "rsiOversold": 35,
           "rsiOverbought": 60,
-          "atrMult": 2.5,
-          "tpMult": 1.5,
-          "mode": "pullback",
+          "atrMultiplier": 2.5,
+          "tpMultiplier": 1.5,
           "session": "NY",
-          "cc": true
+          "useCandleConfirmation": true,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 200,
+          "emaHTFPeriod": 1000,
+          "useEmaHTF": false,
+          "rsiPeriod": 14,
+          "useSessionFilter": true,
+          "useMacd": false,
+          "useBreakout": false,
+          "useMeanReversion": false
         },
-        "score": 0.6363196471680372,
+        "score": 0.6733621183291774,
         "summary": {
-          "avgWR": 77.44539411206078,
-          "minWR": 73.07692307692307,
-          "avgPF": 2.250194852156578,
-          "minPF": 1.6240346884830996,
-          "maxDD": 5.8807999999999945,
-          "avgSharpe": 1.9843338566958504,
-          "totalPnlPct": 40.45348084734768,
-          "totalTrades": 80
-        },
-        "regimes": {
-          "BULL": {
-            "tradesCount": 26,
-            "winRate": 73.07692307692307,
-            "profitFactor": 1.6240346884830996,
-            "totalPnl": 889.6085253313813,
-            "totalPnlPct": 8.896085253313814,
-            "maxDrawdown": 2.8075199999999985,
-            "finalBalance": 10889.608525331381,
-            "sharpeRatio": 1.29268240524292
-          },
-          "BEAR": {
-            "tradesCount": 27,
-            "winRate": 85.18518518518519,
-            "profitFactor": 3.4416983605341573,
-            "totalPnl": 2135.455731768032,
-            "totalPnlPct": 21.35455731768032,
-            "maxDrawdown": 3.960000000000003,
-            "finalBalance": 12135.455731768032,
-            "sharpeRatio": 3.2688300909134846
-          },
-          "SIDEWAYS": {
-            "tradesCount": 27,
-            "winRate": 74.07407407407408,
-            "profitFactor": 1.6848515074524775,
-            "totalPnl": 1020.2838276353541,
-            "totalPnlPct": 10.20283827635354,
-            "maxDrawdown": 5.8807999999999945,
-            "finalBalance": 11020.283827635354,
-            "sharpeRatio": 1.391489073931147
-          }
+          "avgWR": 76.26145309072139,
+          "minWR": 75.39682539682539,
+          "avgPF": 1.9222207577850785,
+          "minPF": 1.8011009151686679,
+          "maxDD": 7.086567572609782,
+          "avgSharpe": 2.2018226421385516,
+          "totalPnlPct": 138.15503810644577,
+          "totalTrades": 257
         }
       },
       {
         "params": {
-          "emaFast": 20,
-          "emaSlow": 100,
+          "rsiOversold": 25,
+          "rsiOverbought": 60,
+          "atrMultiplier": 3,
+          "tpMultiplier": 1.5,
+          "session": "NY",
+          "useCandleConfirmation": true,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 100,
+          "emaHTFPeriod": 1000,
+          "useEmaHTF": false,
+          "rsiPeriod": 14,
+          "useSessionFilter": true,
+          "useMacd": false,
+          "useBreakout": false,
+          "useMeanReversion": false
+        },
+        "score": 0.6569789886141489,
+        "summary": {
+          "avgWR": 81.02624576681181,
+          "minWR": 76.92307692307693,
+          "avgPF": 2.2633702428977034,
+          "minPF": 1.668814749619315,
+          "maxDD": 5.994444499683663,
+          "avgSharpe": 1.9869763135693652,
+          "totalPnlPct": 82.23782649685708,
+          "totalTrades": 159
+        }
+      },
+      {
+        "params": {
           "rsiOversold": 30,
           "rsiOverbought": 60,
-          "atrMult": 3,
-          "tpMult": 1.5,
-          "mode": "pullback",
+          "atrMultiplier": 3,
+          "tpMultiplier": 1.5,
           "session": "NY",
-          "cc": true
+          "useCandleConfirmation": true,
+          "emaFastPeriod": 20,
+          "emaSlowPeriod": 100,
+          "emaHTFPeriod": 1000,
+          "useEmaHTF": false,
+          "rsiPeriod": 14,
+          "useSessionFilter": true,
+          "useMacd": false,
+          "useBreakout": false,
+          "useMeanReversion": false
         },
-        "score": 0.6133656140042547,
+        "score": 0.6569789886141489,
         "summary": {
-          "avgWR": 81.19658119658119,
-          "minWR": 74.07407407407408,
-          "avgPF": 3.1770896099884793,
-          "minPF": 1.406065146823139,
-          "maxDD": 5.994444499683647,
-          "avgSharpe": 2.1849112477577637,
-          "totalPnlPct": 37.18218672007626,
-          "totalTrades": 80
-        },
-        "regimes": {
-          "BULL": {
-            "tradesCount": 26,
-            "winRate": 76.92307692307693,
-            "profitFactor": 1.6688147496193149,
-            "totalPnl": 808.9605009404622,
-            "totalPnlPct": 8.089605009404623,
-            "maxDrawdown": 3.0874558245982917,
-            "finalBalance": 10808.960500940462,
-            "sharpeRatio": 1.3214918988757858
-          },
-          "BEAR": {
-            "tradesCount": 27,
-            "winRate": 92.5925925925926,
-            "profitFactor": 6.456388933522985,
-            "totalPnl": 2316.47688014551,
-            "totalPnlPct": 23.1647688014551,
-            "maxDrawdown": 2.0295960000000055,
-            "finalBalance": 12316.47688014551,
-            "sharpeRatio": 4.318145732993464
-          },
-          "SIDEWAYS": {
-            "tradesCount": 27,
-            "winRate": 74.07407407407408,
-            "profitFactor": 1.406065146823139,
-            "totalPnl": 592.7812909216536,
-            "totalPnlPct": 5.927812909216536,
-            "maxDrawdown": 5.994444499683647,
-            "finalBalance": 10592.781290921654,
-            "sharpeRatio": 0.9150961114040422
-          }
-        }
-      },
-      {
-        "params": {
-          "emaFast": 20,
-          "emaSlow": 100,
-          "rsiOversold": 35,
-          "rsiOverbought": 60,
-          "atrMult": 3,
-          "tpMult": 1.5,
-          "mode": "pullback",
-          "session": "NY",
-          "cc": true
-        },
-        "score": 0.6133656140042547,
-        "summary": {
-          "avgWR": 81.19658119658119,
-          "minWR": 74.07407407407408,
-          "avgPF": 3.1770896099884793,
-          "minPF": 1.406065146823139,
-          "maxDD": 5.994444499683647,
-          "avgSharpe": 2.1849112477577637,
-          "totalPnlPct": 37.18218672007626,
-          "totalTrades": 80
-        },
-        "regimes": {
-          "BULL": {
-            "tradesCount": 26,
-            "winRate": 76.92307692307693,
-            "profitFactor": 1.6688147496193149,
-            "totalPnl": 808.9605009404622,
-            "totalPnlPct": 8.089605009404623,
-            "maxDrawdown": 3.0874558245982917,
-            "finalBalance": 10808.960500940462,
-            "sharpeRatio": 1.3214918988757858
-          },
-          "BEAR": {
-            "tradesCount": 27,
-            "winRate": 92.5925925925926,
-            "profitFactor": 6.456388933522985,
-            "totalPnl": 2316.47688014551,
-            "totalPnlPct": 23.1647688014551,
-            "maxDrawdown": 2.0295960000000055,
-            "finalBalance": 12316.47688014551,
-            "sharpeRatio": 4.318145732993464
-          },
-          "SIDEWAYS": {
-            "tradesCount": 27,
-            "winRate": 74.07407407407408,
-            "profitFactor": 1.406065146823139,
-            "totalPnl": 592.7812909216536,
-            "totalPnlPct": 5.927812909216536,
-            "maxDrawdown": 5.994444499683647,
-            "finalBalance": 10592.781290921654,
-            "sharpeRatio": 0.9150961114040422
-          }
-        }
-      },
-      {
-        "params": {
-          "emaFast": 20,
-          "emaSlow": 200,
-          "rsiOversold": 30,
-          "rsiOverbought": 60,
-          "atrMult": 2.5,
-          "tpMult": 1.5,
-          "mode": "pullback",
-          "session": "NY",
-          "cc": true
-        },
-        "score": 0.605496724482702,
-        "summary": {
-          "avgWR": 75.16299438356702,
-          "minWR": 69.44444444444444,
-          "avgPF": 1.8815957696935077,
-          "minPF": 1.356131522712011,
-          "maxDD": 7.086567572609709,
-          "avgSharpe": 2.049664195773231,
-          "totalPnlPct": 55.792119860604366,
-          "totalTrades": 123
-        },
-        "regimes": {
-          "BULL": {
-            "tradesCount": 41,
-            "winRate": 75.60975609756098,
-            "profitFactor": 1.850224728491833,
-            "totalPnl": 1826.511121821084,
-            "totalPnlPct": 18.26511121821084,
-            "maxDrawdown": 2.8075199999999843,
-            "finalBalance": 11826.511121821084,
-            "sharpeRatio": 1.9852120109347133
-          },
-          "BEAR": {
-            "tradesCount": 46,
-            "winRate": 80.43478260869566,
-            "profitFactor": 2.438431057876679,
-            "totalPnl": 2963.242456173384,
-            "totalPnlPct": 29.632424561733846,
-            "maxDrawdown": 3.960000000000009,
-            "finalBalance": 12963.242456173384,
-            "sharpeRatio": 3.2133876221890234
-          },
-          "SIDEWAYS": {
-            "tradesCount": 36,
-            "winRate": 69.44444444444444,
-            "profitFactor": 1.356131522712011,
-            "totalPnl": 789.4584080659679,
-            "totalPnlPct": 7.894584080659679,
-            "maxDrawdown": 7.086567572609709,
-            "finalBalance": 10789.458408065968,
-            "sharpeRatio": 0.9503929541959573
-          }
+          "avgWR": 81.02624576681181,
+          "minWR": 76.92307692307693,
+          "avgPF": 2.2633702428977034,
+          "minPF": 1.668814749619315,
+          "maxDD": 5.994444499683663,
+          "avgSharpe": 1.9869763135693652,
+          "totalPnlPct": 82.23782649685708,
+          "totalTrades": 159
         }
       }
     ]
   },
-  "executionTime": "267.0s"
+  "executionTime": "11418.1s"
 }

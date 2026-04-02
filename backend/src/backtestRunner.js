@@ -73,7 +73,7 @@ async function runBacktest(symbol, startTime, endTime, balance, overrideConfig =
     const candles = await loadHistoricalData(symbol, timeframe, startTime, endTime, mode);
     if (!candles || candles.length === 0) {
         console.error('[backtestRunner] Nenhum dado encontrado para o período selecionado.');
-        return { trades: [], finalBalance: balance, debugLog: [], summary: null };
+        return { trades: [], finalBalance: balance, debugLog: [], summary: null, _candlesLoaded: 0 };
     }
     console.log(`[backtestRunner] ${candles.length} candles carregados para ${symbol} @ ${timeframe} [${mode}].`);
 
@@ -185,7 +185,7 @@ async function runBacktest(symbol, startTime, endTime, balance, overrideConfig =
         console.warn('\n⚠️  WARNING: Strategy generated too few trades for statistical validation.');
     }
 
-    return { trades, finalBalance: balance, debugLog, summary };
+    return { trades, finalBalance: balance, debugLog, summary, _candlesLoaded: candles.length };
 }
 
 /**

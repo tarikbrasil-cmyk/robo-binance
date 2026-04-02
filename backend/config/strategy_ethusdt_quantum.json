@@ -8,19 +8,22 @@
     "maxDailyLoss": 0.05,
     "maxDrawdownStop": 0.15,
     "maxConcurrentTrades": 2,
-    "lastPromotionSource": "quant_v3",
-    "lastPromotionAt": "2026-04-02T13:51:51.253Z",
-    "lastUpdatedAt": "2026-04-02T13:51:51.253Z"
+    "avoidTimeStartUTC": "23:59",
+    "avoidTimeEndUTC": "00:01",
+    "lastPromotionSource": "quant_optimization",
+    "lastPromotionAt": "2026-04-02T16:23:31.896Z",
+    "lastUpdatedAt": "2026-04-02T16:23:31.896Z",
+    "lastUpdatedSource": "quant_optimization"
   },
   "trendStrategy": {
     "timeframe": "5m",
     "emaFast": 20,
-    "emaSlow": 100,
+    "emaSlow": 200,
     "emaHTF": 1000,
     "rsiPeriod": 14,
     "atrPeriod": 14,
     "adxPeriod": 14,
-    "rsiOversold": 30,
+    "rsiOversold": 25,
     "rsiOverbought": 60,
     "useEmaHTF": false,
     "atrMultiplierSL": 2.5,
@@ -50,47 +53,58 @@
     "ETH/USDT:USDT"
   ],
   "performance": {
-    "crossRegimeScore": 0.6363196471680372,
-    "avgWinRate": 77.44539411206078,
-    "minWinRate": 73.07692307692307,
-    "avgProfitFactor": 2.250194852156578,
-    "minProfitFactor": 1.6240346884830996,
-    "maxDrawdown": 5.8807999999999945,
-    "avgSharpeRatio": 1.9843338566958504,
-    "totalPnlPct": 40.45348084734768,
-    "totalTrades": 80,
+    "crossRegimeScore": 0.6733621183291774,
+    "avgWinRate": 76.26145309072139,
+    "minWinRate": 75.39682539682539,
+    "avgProfitFactor": 1.9222207577850785,
+    "minProfitFactor": 1.8011009151686679,
+    "maxDrawdown": 7.086567572609782,
+    "avgSharpeRatio": 2.2018226421385516,
+    "totalPnlPct": 138.15503810644577,
+    "totalTrades": 257,
     "perRegime": {
       "BULL": {
-        "tradesCount": 26,
-        "winRate": 73.07692307692307,
-        "profitFactor": 1.6240346884830996,
-        "totalPnl": 889.6085253313813,
-        "totalPnlPct": 8.896085253313814,
-        "maxDrawdown": 2.8075199999999985,
-        "finalBalance": 10889.608525331381,
-        "sharpeRatio": 1.29268240524292
+        "tradesCount": 41,
+        "winRate": 75.60975609756098,
+        "profitFactor": 1.8502247284918303,
+        "totalPnl": 1826.5111218210768,
+        "totalPnlPct": 18.26511121821077,
+        "maxDrawdown": 2.807520000000002,
+        "finalBalance": 11826.511121821077,
+        "sharpeRatio": 1.9852120109347071,
+        "expectancy": 0.44549051751733443,
+        "avgRR": 0.5999999999999991
       },
       "BEAR": {
-        "tradesCount": 27,
-        "winRate": 85.18518518518519,
-        "profitFactor": 3.4416983605341573,
-        "totalPnl": 2135.455731768032,
-        "totalPnlPct": 21.35455731768032,
-        "maxDrawdown": 3.960000000000003,
-        "finalBalance": 12135.455731768032,
-        "sharpeRatio": 3.2688300909134846
+        "tradesCount": 90,
+        "winRate": 77.77777777777779,
+        "profitFactor": 2.1153366296947373,
+        "totalPnl": 5387.121713768331,
+        "totalPnlPct": 53.8712171376833,
+        "maxDrawdown": 3.9600000000000066,
+        "finalBalance": 15387.12171376833,
+        "sharpeRatio": 2.5812598204867983,
+        "expectancy": 0.5985690793075924,
+        "avgRR": 0.5999999999999989
       },
       "SIDEWAYS": {
-        "tradesCount": 27,
-        "winRate": 74.07407407407408,
-        "profitFactor": 1.6848515074524775,
-        "totalPnl": 1020.2838276353541,
-        "totalPnlPct": 10.20283827635354,
-        "maxDrawdown": 5.8807999999999945,
-        "finalBalance": 11020.283827635354,
-        "sharpeRatio": 1.391489073931147
+        "tradesCount": 126,
+        "winRate": 75.39682539682539,
+        "profitFactor": 1.8011009151686679,
+        "totalPnl": 6601.870975055168,
+        "totalPnlPct": 66.01870975055168,
+        "maxDrawdown": 7.086567572609782,
+        "finalBalance": 16601.870975055168,
+        "sharpeRatio": 2.0389960949941486,
+        "expectancy": 0.5239580138932669,
+        "avgRR": 0.5999999999999976
       }
     },
-    "optimizedAt": "2026-04-02T13:51:51.253Z"
+    "optimizedAt": "2026-04-02T16:23:31.896Z",
+    "dataRegimes": [
+      "BULL: 2021-01-01 → 2021-11-30",
+      "BEAR: 2022-04-01 → 2022-12-31",
+      "SIDEWAYS: 2023-01-01 → 2023-10-31"
+    ]
   }
 }
