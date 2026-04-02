@@ -11,6 +11,9 @@ import { runBacktestProgrammatic } from '../backtestRunner.js';
 
 const router = express.Router();
 
+// Version marker for deploy verification
+router.get('/version', (req, res) => res.json({ version: 'v3-modular-fix', deployed: new Date().toISOString() }));
+
 // ── Helpers: read / write strategy_config.json ─────────────────────────────
 const CONFIG_PATH = path.join(process.cwd(), 'config', 'strategy_config.json');
 
@@ -199,7 +202,9 @@ router.post('/backtest', async (req, res) => {
   try {
     // Build config override from saved strategy params if provided
     let strategyConfig = null;
+    let usedOverride = false;
     if (strategyParams && typeof strategyParams === 'object') {
+      usedOverride = true;
       const { loadStrategyConfig } = await import('../strategy/regime_engine.js');
       const baseConfig = loadStrategyConfig();
       strategyConfig = {
@@ -235,8 +240,16 @@ router.post('/backtest', async (req, res) => {
       parseFloat(balance),
       strategyConfig
     );
+    // Add diagnostic info
+    result._debug = {
+      version: 'v3-modular-fix',
+      usedOverride,
+      strategyName: strategyConfig?.general?.strategyName || 'from_config_file',
+      candlesLoaded: result.trades?.length === 0 ? 'check_server_logs' : 'ok',
+    };
     res.json(result);
   } catch (error) {
+    console.error('[BACKTEST ERROR]', error);
     res.status(500).json({ error: 'Backtest falhou', details: error.message });
   }
 });

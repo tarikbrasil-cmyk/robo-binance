@@ -163,19 +163,18 @@ function seedQuantumStrategies() {
     },
   ];
 
+  // Use INSERT OR IGNORE to avoid race conditions and simplify seeding
   for (const s of strategies) {
-    db.get(`SELECT id FROM strategies WHERE name = ?`, [s.name], (err, row) => {
-      if (err || row) return; // already exists or error
-      const paramsJson = JSON.stringify({ ...s.params, _meta: s.meta });
-      db.run(
-        `INSERT INTO strategies (name, source, params_json, symbol, timeframe, is_active, benchmark_validated, backtest_validated, benchmark_score)
-         VALUES (?, ?, ?, ?, ?, 0, 1, 1, ?)`,
-        [s.name, s.source, paramsJson, s.symbol, s.timeframe, s.benchmark_score],
-        (err) => {
-          if (!err) console.log(`[SEED] Strategy "${s.name}" inserted (score=${s.benchmark_score})`);
-        }
-      );
-    });
+    const paramsJson = JSON.stringify({ ...s.params, _meta: s.meta });
+    db.run(
+      `INSERT OR IGNORE INTO strategies (name, source, params_json, symbol, timeframe, is_active, benchmark_validated, backtest_validated, benchmark_score)
+       VALUES (?, ?, ?, ?, ?, 0, 1, 1, ?)`,
+      [s.name, s.source, paramsJson, s.symbol, s.timeframe, s.benchmark_score],
+      function(err) {
+        if (!err && this.changes > 0) console.log(`[SEED] Strategy "${s.name}" inserted (score=${s.benchmark_score})`);
+        else if (err) console.error(`[SEED ERROR] ${s.name}:`, err.message);
+      }
+    );
   }
 }
 
