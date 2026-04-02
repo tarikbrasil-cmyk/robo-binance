@@ -22,7 +22,7 @@ export function simulateTrade(
     // Support both config.general.strategyName (new) and config.activeStrategy (legacy)
     const strategyName = config.general?.strategyName || config.activeStrategy || 'INSTITUTIONAL_ALPHA';
 
-    if (strategyName.startsWith('MODULAR_V6') || strategyName.startsWith('PROMOTED_')) {
+    if (strategyName.startsWith('MODULAR_V6') || strategyName.startsWith('PROMOTED_') || strategyName.startsWith('BENCHMARK_')) {
         modularParams = buildModularParamsFromConfig(config);
         signalData = evaluateModularStrategyV6(candles, indicators, currentIndex, modularParams, symbol);
     } else if (strategyName === 'V5' || strategyName === 'REGIME_ADAPTIVE_V5') {

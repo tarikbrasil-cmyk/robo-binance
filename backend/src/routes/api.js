@@ -192,16 +192,48 @@ router.put('/config', (req, res) => {
 
 // POST Backtest — run a historical simulation via the HTTP API
 router.post('/backtest', async (req, res) => {
-  const { symbol, startDate, endDate, balance = 1000 } = req.body;
+  const { symbol, startDate, endDate, balance = 1000, strategyParams } = req.body;
   if (!symbol || !startDate || !endDate) {
     return res.status(400).json({ error: 'symbol, startDate e endDate são obrigatórios' });
   }
   try {
+    // Build config override from saved strategy params if provided
+    let strategyConfig = null;
+    if (strategyParams && typeof strategyParams === 'object') {
+      const { loadStrategyConfig } = await import('../strategy/regime_engine.js');
+      const baseConfig = loadStrategyConfig();
+      strategyConfig = {
+        ...baseConfig,
+        general: {
+          ...baseConfig.general,
+          strategyName: 'MODULAR_V6_BACKTEST',
+        },
+        trendStrategy: {
+          ...baseConfig.trendStrategy,
+          emaFast: strategyParams.emaFastPeriod ?? baseConfig.trendStrategy.emaFast,
+          emaSlow: strategyParams.emaSlowPeriod ?? baseConfig.trendStrategy.emaSlow,
+          emaHTF: strategyParams.emaHTFPeriod ?? baseConfig.trendStrategy.emaHTF,
+          rsiPeriod: strategyParams.rsiPeriod ?? baseConfig.trendStrategy.rsiPeriod,
+          rsiOversold: strategyParams.rsiOversold ?? baseConfig.trendStrategy.rsiOversold,
+          rsiOverbought: strategyParams.rsiOverbought ?? baseConfig.trendStrategy.rsiOverbought,
+          atrMultiplierSL: strategyParams.atrMultiplier ?? baseConfig.trendStrategy.atrMultiplierSL,
+          atrMultiplierTP: strategyParams.tpMultiplier ?? baseConfig.trendStrategy.atrMultiplierTP,
+          useBreakout: strategyParams.useBreakout ?? false,
+          useMeanReversion: strategyParams.useMeanReversion ?? false,
+          useSessionFilter: strategyParams.useSessionFilter ?? true,
+          session: strategyParams.session ?? 'NY',
+          useCandleConfirmation: strategyParams.useCandleConfirmation ?? true,
+          useEmaHTF: strategyParams.useEmaHTF ?? false,
+          useMacd: strategyParams.useMacd ?? false,
+        },
+      };
+    }
     const result = await runBacktestProgrammatic(
       symbol.toUpperCase(),
       startDate,
       endDate,
-      parseFloat(balance)
+      parseFloat(balance),
+      strategyConfig
     );
     res.json(result);
   } catch (error) {

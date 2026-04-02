@@ -45,6 +45,7 @@ function App() {
   const [backtestResult, setBacktestResult] = useState(null);
   const [backtestLoading, setBacktestLoading] = useState(false);
   const [backtestError, setBacktestError] = useState(null);
+  const [backtestStrategyParams, setBacktestStrategyParams] = useState(null);
 
   const isSpot = botMode === 'SPOT';
 
@@ -161,15 +162,17 @@ function App() {
     setBacktestResult(null);
     setBacktestError(null);
     try {
+      const payload = {
+        symbol: backtestForm.symbol,
+        startDate: backtestForm.startDate,
+        endDate: backtestForm.endDate,
+        balance: parseFloat(backtestForm.balance),
+      };
+      if (backtestStrategyParams) payload.strategyParams = backtestStrategyParams;
       const res = await fetch(`${API_URL}/backtest`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          symbol: backtestForm.symbol,
-          startDate: backtestForm.startDate,
-          endDate: backtestForm.endDate,
-          balance: parseFloat(backtestForm.balance),
-        }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -281,7 +284,7 @@ function App() {
 
         {activeTab === 'dashboard' && <DashboardView pnl={pnl} riskData={riskData} prices={prices} activePositions={activePositions} logs={logs} config={config} />}
         {activeTab === 'analytics' && <AnalyticsView metrics={metrics} history={tradeHistory} />}
-        {activeTab === 'backtest' && <BacktestView form={backtestForm} onFormChange={setBacktestForm} onRun={runBacktest} loading={backtestLoading} result={backtestResult} error={backtestError} />}
+        {activeTab === 'backtest' && <BacktestView form={backtestForm} onFormChange={setBacktestForm} onRun={runBacktest} loading={backtestLoading} result={backtestResult} error={backtestError} onStrategyParamsChange={setBacktestStrategyParams} />}
         {activeTab === 'history' && <HistoryView history={tradeHistory} onExport={exportData} />}
         {activeTab === 'audit' && <AuditView decisions={decisionTrail} />}
         {activeTab === 'settings' && <SettingsView config={config} onSave={updateStrategy} />}
@@ -1276,7 +1279,7 @@ function RiskStat({ label, value }) {
     )
 }
 
-function BacktestView({ form, onFormChange, onRun, loading, result, error }) {
+function BacktestView({ form, onFormChange, onRun, loading, result, error, onStrategyParamsChange }) {
     const [strategies, setStrategies] = useState([]);
     const [selectedStratId, setSelectedStratId] = useState('');
     const [btMsg, setBtMsg] = useState(null);
@@ -1289,10 +1292,18 @@ function BacktestView({ form, onFormChange, onRun, loading, result, error }) {
 
     const loadStrategyForBacktest = (id) => {
         setSelectedStratId(id);
-        if (!id) return;
+        if (!id) {
+            if (onStrategyParamsChange) onStrategyParamsChange(null);
+            return;
+        }
         const strat = strategies.find(s => s.id === parseInt(id));
         if (strat) {
             onFormChange({ ...form, symbol: strat.symbol || form.symbol });
+            // Extract strategy params (remove _meta) and send to backtest
+            if (strat.params && onStrategyParamsChange) {
+                const { _meta, ...params } = strat.params;
+                onStrategyParamsChange(params);
+            }
         }
     };
 
@@ -1350,7 +1361,22 @@ function BacktestView({ form, onFormChange, onRun, loading, result, error }) {
                             <option key={s.id} value={s.id}>{s.name} ({s.symbol || '?'} {s.timeframe || '?'}) {s.is_active ? '● ATIVA' : ''}</option>
                         ))}
                     </select>
-                    <p style={{ fontSize: '0.78rem', opacity: 0.4, marginTop: '6px' }}>O backtest usará a estratégia carregada no config do bot. Selecionar aqui atualiza o símbolo automaticamente.</p>
+                    <p style={{ fontSize: '0.78rem', opacity: 0.4, marginTop: '6px' }}>O backtest usará os parâmetros da estratégia selecionada. Sem seleção, usa a configuração ativa do bot.</p>
+                    {selectedStratId && (() => {
+                        const strat = strategies.find(s => s.id === parseInt(selectedStratId));
+                        if (!strat) return null;
+                        const p = strat.params || {};
+                        const m = p._meta || {};
+                        return (
+                            <div style={{ marginTop: '10px', padding: '10px 14px', background: 'rgba(96,239,255,0.06)', border: '1px solid rgba(96,239,255,0.2)', borderRadius: '8px', fontSize: '0.8rem' }}>
+                                <span style={{ color: '#60efff', fontWeight: 600 }}>📊 {strat.name}</span>
+                                <span style={{ opacity: 0.5, marginLeft: '10px' }}>
+                                    EMA {p.emaFastPeriod}/{p.emaSlowPeriod} | RSI {p.rsiOversold}/{p.rsiOverbought} | SL {p.atrMultiplier}x TP {p.tpMultiplier}x | {p.session}
+                                </span>
+                                {m.avgWR && <span style={{ marginLeft: '10px', color: '#00ff87' }}>WR {m.avgWR}% | PF {m.avgPF} | Score {m.score}</span>}
+                            </div>
+                        );
+                    })()}
                 </div>
             )}
 
