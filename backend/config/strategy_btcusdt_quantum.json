@@ -1,0 +1,96 @@
+{
+  "general": {
+    "strategyName": "BTC_Quantum_Pullback_v1",
+    "cooldownMinutes": 60,
+    "maxTradesPerDay": 10,
+    "minEntryIntervalHours": 1,
+    "maxSpreadPercent": 0.0005,
+    "maxDailyLoss": 0.05,
+    "maxDrawdownStop": 0.15,
+    "maxConcurrentTrades": 2,
+    "lastPromotionSource": "quant_v3",
+    "lastPromotionAt": "2026-04-02T13:51:51.220Z",
+    "lastUpdatedAt": "2026-04-02T13:51:51.246Z"
+  },
+  "trendStrategy": {
+    "timeframe": "5m",
+    "emaFast": 20,
+    "emaSlow": 200,
+    "emaHTF": 1000,
+    "rsiPeriod": 14,
+    "atrPeriod": 14,
+    "adxPeriod": 14,
+    "rsiOversold": 40,
+    "rsiOverbought": 65,
+    "useEmaHTF": false,
+    "atrMultiplierSL": 1.5,
+    "atrMultiplierTP": 2,
+    "useCandleConfirmation": true,
+    "useBreakout": false,
+    "useMeanReversion": false,
+    "useMacd": false,
+    "leverage": 10,
+    "useSessionFilter": true,
+    "session": "NY"
+  },
+  "risk": {
+    "maxAccountExposure": 0.2,
+    "maxRiskPerTrade": 0.02,
+    "maxFundingRate": 0.0005,
+    "killSwitchLosses": 5,
+    "killSwitchPauseHours": 6
+  },
+  "regime": {
+    "minVolatilityPercent": 0.001,
+    "trendAdxThreshold": 25,
+    "rangingAdxThreshold": 20
+  },
+  "allowedSymbols": [
+    "BTC/USDT",
+    "BTC/USDT:USDT"
+  ],
+  "performance": {
+    "crossRegimeScore": 0.5959975606634927,
+    "avgWinRate": 56.15588115588116,
+    "minWinRate": 55.55555555555556,
+    "avgProfitFactor": 1.6582261686594846,
+    "minProfitFactor": 1.6072798005492226,
+    "maxDrawdown": 8.495710460092413,
+    "avgSharpeRatio": 1.900789207523071,
+    "totalPnlPct": 94.01000891526806,
+    "totalTrades": 137,
+    "perRegime": {
+      "BULL": {
+        "tradesCount": 52,
+        "winRate": 55.769230769230774,
+        "profitFactor": 1.6072798005492226,
+        "totalPnl": 3478.8901080317773,
+        "totalPnlPct": 34.78890108031777,
+        "maxDrawdown": 7.197464861866684,
+        "finalBalance": 13478.890108031777,
+        "sharpeRatio": 1.9586899573373522
+      },
+      "BEAR": {
+        "tradesCount": 36,
+        "winRate": 55.55555555555556,
+        "profitFactor": 1.6146214269173589,
+        "totalPnl": 2251.9847253268545,
+        "totalPnlPct": 22.519847253268544,
+        "maxDrawdown": 8.495710460092413,
+        "finalBalance": 12251.984725326854,
+        "sharpeRatio": 1.690204734415333
+      },
+      "SIDEWAYS": {
+        "tradesCount": 49,
+        "winRate": 57.14285714285714,
+        "profitFactor": 1.752777278511872,
+        "totalPnl": 3670.1260581681745,
+        "totalPnlPct": 36.701260581681744,
+        "maxDrawdown": 7.763184000000006,
+        "finalBalance": 13670.126058168174,
+        "sharpeRatio": 2.053472930816527
+      }
+    },
+    "optimizedAt": "2026-04-02T13:51:51.247Z"
+  }
+}

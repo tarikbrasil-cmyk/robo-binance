@@ -105,7 +105,78 @@ function initDb() {
       if (!rows.find(r => r.name === 'reason')) db.run("ALTER TABLE decision_journal ADD COLUMN reason TEXT");
       if (!rows.find(r => r.name === 'context_json')) db.run("ALTER TABLE decision_journal ADD COLUMN context_json TEXT");
     });
+
+    // ── Seed quantum-optimized strategies (survive ephemeral SQLite on Render) ──
+    seedQuantumStrategies();
   });
+}
+
+function seedQuantumStrategies() {
+  const strategies = [
+    {
+      name: 'BTC_Quantum_Pullback_v1',
+      source: 'quant_optimization',
+      symbol: 'BTCUSDT',
+      timeframe: '5m',
+      benchmark_score: 0.596,
+      params: {
+        emaFastPeriod: 20, emaSlowPeriod: 200, emaHTFPeriod: 1000,
+        rsiPeriod: 14, rsiOversold: 40, rsiOverbought: 65,
+        atrMultiplier: 1.5, tpMultiplier: 2,
+        useBreakout: false, useMeanReversion: false,
+        useSessionFilter: true, session: 'NY',
+        useCandleConfirmation: true, useEmaHTF: false, useMacd: false,
+      },
+      meta: {
+        score: 0.596, avgWR: 56.2, minWR: 55.6, avgPF: 1.66, maxDD: 8.5,
+        avgSharpe: 1.90, totalPnlPct: 94.0, totalTrades: 137,
+        regimes: {
+          BULL:     { wr: 55.8, pf: 1.61, dd: 7.2, sharpe: 1.96, pnl: 34.8, trades: 52 },
+          BEAR:     { wr: 55.6, pf: 1.61, dd: 8.5, sharpe: 1.69, pnl: 22.5, trades: 36 },
+          SIDEWAYS: { wr: 57.1, pf: 1.75, dd: 7.8, sharpe: 2.05, pnl: 36.7, trades: 49 },
+        },
+      },
+    },
+    {
+      name: 'ETH_Quantum_Pullback_v1',
+      source: 'quant_optimization',
+      symbol: 'ETHUSDT',
+      timeframe: '5m',
+      benchmark_score: 0.636,
+      params: {
+        emaFastPeriod: 20, emaSlowPeriod: 100, emaHTFPeriod: 1000,
+        rsiPeriod: 14, rsiOversold: 30, rsiOverbought: 60,
+        atrMultiplier: 2.5, tpMultiplier: 1.5,
+        useBreakout: false, useMeanReversion: false,
+        useSessionFilter: true, session: 'NY',
+        useCandleConfirmation: true, useEmaHTF: false, useMacd: false,
+      },
+      meta: {
+        score: 0.636, avgWR: 77.4, minWR: 73.1, avgPF: 2.25, maxDD: 5.9,
+        avgSharpe: 1.98, totalPnlPct: 40.5, totalTrades: 80,
+        regimes: {
+          BULL:     { wr: 73.1, pf: 1.62, dd: 2.8, sharpe: 1.29, pnl: 8.9,  trades: 26 },
+          BEAR:     { wr: 85.2, pf: 3.44, dd: 4.0, sharpe: 3.27, pnl: 21.4, trades: 27 },
+          SIDEWAYS: { wr: 74.1, pf: 1.68, dd: 5.9, sharpe: 1.39, pnl: 10.2, trades: 27 },
+        },
+      },
+    },
+  ];
+
+  for (const s of strategies) {
+    db.get(`SELECT id FROM strategies WHERE name = ?`, [s.name], (err, row) => {
+      if (err || row) return; // already exists or error
+      const paramsJson = JSON.stringify({ ...s.params, _meta: s.meta });
+      db.run(
+        `INSERT INTO strategies (name, source, params_json, symbol, timeframe, is_active, benchmark_validated, backtest_validated, benchmark_score)
+         VALUES (?, ?, ?, ?, ?, 0, 1, 1, ?)`,
+        [s.name, s.source, paramsJson, s.symbol, s.timeframe, s.benchmark_score],
+        (err) => {
+          if (!err) console.log(`[SEED] Strategy "${s.name}" inserted (score=${s.benchmark_score})`);
+        }
+      );
+    });
+  }
 }
 
 // Helpers
